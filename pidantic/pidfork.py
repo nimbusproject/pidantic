@@ -5,7 +5,7 @@ from gevent import Greenlet
 import gevent
 import os
 import time
-from pidantic.pidbase import PIDanticBase
+from pidantic.pidbase import PIDanticStateMachineBase
 
 def _make_nonblocking(filelike):
     fd = filelike.fileno()
@@ -97,15 +97,13 @@ def write_blocking(filelike, data):
     return g.value
 
 
-class PIDanticFork(PIDanticBase):
+class PIDanticFork(PIDanticStateMachineBase):
 
     WRITE_PIPE_ENV = "PIDANTIC_WRITE_PIPE_FD"
     READ_PIPE_ENV = "PIDANTIC_READ_PIPE_FD"
 
-    def __init__(self, argv, auto_restart=False, log=logging, use_channel=False, channel_is_stdio=False):
-        PIDanticBase.__init__(self, argv, auto_restart=auto_restart, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio)
-        self._use_channel = use_channel
-        self._channel_is_stdio = channel_is_stdio
+    def __init__(self, argv, event_callback=None, log=logging, use_channel=False, channel_is_stdio=False, **kwargs):
+        PIDanticStateMachineBase.__init__(self, argv, event_callback=event_callback, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio, **kwargs)
 
     def starting(self):
         self._p = None
@@ -120,11 +118,11 @@ class PIDanticFork(PIDanticBase):
         try:
             self._start()
             event = "EVENT_RUNNING"
+            self._send_event(event)
         except Exception, ex:
             # log it
             event = "EVENT_FAULT"
             raise
-        self._send_event(event)
 
     def restart_fault(self):
         pass
@@ -202,7 +200,6 @@ class PIDanticFork(PIDanticBase):
             return
         self._rc = rc
         event = "EVENT_EXITED"
-
         self._send_event(event)
 
         return True

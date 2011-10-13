@@ -1,25 +1,26 @@
 import logging
-from pidantic.pidantic_exceptions import PIDanticUsageException
+from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticStateException
 
+class PIDanticState:
+    STATE_PENDING = "STATE_PENDING"
+    STATE_STOPPED = "STATE_STOPPED"
+    STATE_STARTING = "STATE_STARTING"
+    STATE_RUNNING = "STATE_RUNNING"
+    STATE_STOPPING = "STATE_STOPPING"
+    STATE_STOPPING_RESTART = "STATE_STOPPING_RESTART"
+    STATE_EXITED = "STATE_EXITED"
 
-PIDanticStatesList = [
-    "STATE_PENDING",
-    "STATE_STOPPED",
-    "STATE_STARTING",
-    "STATE_RUNNING",
-    "STATE_STOPPING",
-    "STATE_STOPPING_RESTART",
-    "STATE_EXITED",
-]
+PIDanticStatesList = [d for d in dir(PIDanticState) if d.find("STATE_") == 0]
 
-PIDanticEventsList = [
-    "EVENT_START_REQUEST",
-    "EVENT_RUNNING",
-    "EVENT_FAULT",
-    "EVENT_STOP_REQUEST",
-    "EVENT_RESTART_REQUEST",
-    "EVENT_EXITED",
-]
+class PIDanticEvents:
+    EVENT_START_REQUEST = "EVENT_START_REQUEST"
+    EVENT_RUNNING = "EVENT_RUNNING"
+    EVENT_FAULT = "EVENT_FAULT"
+    EVENT_STOP_REQUEST = "EVENT_STOP_REQUEST"
+    EVENT_RESTART_REQUEST = "EVENT_RESTART_REQUEST"
+    EVENT_EXITED = "EVENT_EXITED"
+
+PIDanticEventsList = [d for d in dir(PIDanticEvents) if d.find("EVENT_") == 0]
 
 
 class PIDanticStateMachine(object):
@@ -75,7 +76,7 @@ class PIDanticStateMachine(object):
     def event_occurred(self, event):
         ent = self._transitions[self._current_state][event]
         if ent is None:
-            raise PIDanticUsageException("Undefined event %s at state %s" % (event, self._current_state))
+            raise PIDanticStateException("Undefined event %s at state %s" % (event, self._current_state))
 
         function = ent[0]
         next_state = ent[1]
@@ -85,7 +86,7 @@ class PIDanticStateMachine(object):
 
         if function:
             try:
-                event = function()
+                function()
             except Exception, ex:
                 self._log.log(logging.ERROR, "An exception occurred calling %s on %s due to %s in state %s || %s" % (str(function), str(object), event, old_state, str(ex)))
                 raise
