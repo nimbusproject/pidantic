@@ -17,7 +17,6 @@ def _poller(pidfork):
 
     while not pidfork.is_done():
         pidfork.poll()
-        time.sleep(0.1)
         gevent.sleep(1)
 
 def read_nonblocking(fd, size):
