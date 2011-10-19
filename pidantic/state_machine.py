@@ -17,8 +17,8 @@ class PIDanticEvents:
     EVENT_RUNNING = "EVENT_RUNNING"
     EVENT_FAULT = "EVENT_FAULT"
     EVENT_STOP_REQUEST = "EVENT_STOP_REQUEST"
-    EVENT_RESTART_REQUEST = "EVENT_RESTART_REQUEST"
-    EVENT_EXITED = "EVENT_EXITED"
+    EVENT_EXITED = "EVENT_EXITED",
+    EVENT_RESTART = "EVENT_RESTART"
 
 PIDanticEventsList = [d for d in dir(PIDanticEvents) if d.find("EVENT_") == 0]
 
@@ -50,7 +50,6 @@ class PIDanticStateMachine(object):
         self.set_mapping("STATE_RUNNING", "EVENT_EXITED", "STATE_EXITED", o.stopped)
         self.set_mapping("STATE_RUNNING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.stopping)
         self.set_mapping("STATE_RUNNING", "EVENT_FAULT", "STATE_STOPPING", o.run_fault)
-        self.set_mapping("STATE_RUNNING", "EVENT_RESTART_REQUEST", "STATE_STOPPING_RESTART", o.stopping)
 
         self.set_mapping("STATE_STOPPING_RESTART", "EVENT_EXITED", "STATE_STARTING", o.starting)
         self.set_mapping("STATE_STOPPING_RESTART", "EVENT_FAULT", "STATE_STOPPING_RESTART", o.restart_fault)
@@ -60,7 +59,7 @@ class PIDanticStateMachine(object):
         self.set_mapping("STATE_STOPPING", "EVENT_FAULT", "STATE_STOPPING", o.stopping_fault)
 
         self.set_mapping("STATE_EXITED", "EVENT_START_REQUEST", "STATE_STARTING", o.starting)
-        self.set_mapping("STATE_EXITED", "EVENT_RESTART_REQUEST", "STATE_STARTING", o.starting)
+        self.set_mapping("STATE_EXITED", "EVENT_EXITED", "STATE_EXITED", None)
 
 
     def set_mapping(self, state, event, next_state, function):

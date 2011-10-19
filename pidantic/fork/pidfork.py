@@ -103,6 +103,7 @@ class PIDanticFork(PIDanticStateMachineBase):
 
     def __init__(self, argv, event_callback=None, log=logging, use_channel=False, channel_is_stdio=False, **kwargs):
         PIDanticStateMachineBase.__init__(self, argv, event_callback=event_callback, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio, **kwargs)
+        self._argv = argv
 
     def starting(self):
         self._p = None

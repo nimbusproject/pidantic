@@ -1,3 +1,4 @@
+from subprocess import Popen
 import supervisor.xmlrpc
 import xmlrpclib
 from supervisor import xmlrpc
@@ -9,13 +10,24 @@ import os
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 from pidantic.supd.persistance import SupDDataObject, SupDProgramDataObject
 
+
+
+def get_all_supds(supd_db, log=logging):
+
+    all_supds = supd_db.get_all_supds()
+    supd_list = []
+    for data_object in all_supds:
+        supd = SupD(data_object=data_object, log=log)
+        supd_list.append(supd)
+    return supd_list
+
 class SupD(object):
 
     cols = ['command', 'process_name', 'numprocs', 'directory', 'umask', 'priority', 'autostart',
            'autorestart', 'startsecs', 'startretries', 'redirect_stderr', 'startretries', 'startretries']
 
 
-    def __init__(self, supd_db, name, template=None, executable=None, data_object=None, dirpath=None, log=logging):
+    def __init__(self, supd_db, name=None, template=None, executable=None, data_object=None, dirpath=None, log=logging):
         if executable is None and data_object is None:
             raise PIDanticUsageException("You specify either an executable or socket")
         if executable and data_object:
@@ -25,6 +37,8 @@ class SupD(object):
         self._supd_db = supd_db
         self._template = template
         if executable:
+            if not dirpath:
+                raise PIDanticUsageException("You must set the dirpath keyword argument")
             self._working_dir = os.path.join(dirpath, name)
             try:
                 os.makedirs(self._working_dir)
@@ -35,13 +49,14 @@ class SupD(object):
             data_object.logfile = os.path.join(self._working_dir, "supd.log")
             data_object.pidfile = os.path.join(self._working_dir, "supd.pid")
             data_object.unix_socket_file = os.path.join(self._working_dir, "supd.sock")
+            data_object.name = name
 
             self._data_object = data_object
             conf_file_name = self.write_conf()
             cmd = "%s -c %s" % (executable, conf_file_name)
-            rc = os.system(cmd)
+            rc = _run_log(cmd, self._log)
             if rc != 0:
-                raise PIDanticExecutionException("%s failed to execute" % cmd)
+                raise PIDanticExecutionException("%s failed to execute | %d" % (cmd, rc))
             supd_db.db_obj_add(data_object)
             supd_db.db_commit()
         else:
@@ -62,10 +77,12 @@ class SupD(object):
         rc = sup.getProcessInfo(name)
         return rc
 
-    def run_program(self, command, **kwargs):
+    def get_data_object(self):
+        return self._data_object
+
+    def run_program(self, **kwargs):
 
         program_object = SupDProgramDataObject()
-        program_object.command = command
         for key in kwargs:
             if key not in self.cols:
                 raise PIDanticUsageException('invalid key %s' % (key))
@@ -79,7 +96,7 @@ class SupD(object):
         # reread supd
         rc = self._reread()
         self._supd_db.db_commit()
-        return rc
+        return program_object
 
     def getState(self):
         sup = self._proxy.supervisor
@@ -121,7 +138,27 @@ class SupD(object):
         return rc
 
     def terminate_program(self, name):
-        pass
+        sup = self._proxy.supervisor
+        rc = sup.stopProcessGroup(name)
+        return rc
+
+    def remove_program(self, name):
+        program_object = None
+        for p in self._data_object.programs:
+            if p.process_name == name:
+                program_object = p
+                break
+        if not program_object:
+            raise PIDanticUsageException("%s is not a known program name" % (name))
+
+        self._data_object.programs.remove(program_object)
+        self._supd_db.db_obj_delete(program_object)
+        self.write_conf()
+        # reread supd
+        rc = self._reread()
+        self._supd_db.db_commit()
+        return rc
+
 
     def terminate(self):
         sup = self._proxy.supervisor
@@ -137,7 +174,7 @@ class SupD(object):
         # it should never be possible for 2 to have this at once, but we should have locks anyway
 
         conffile = os.path.join(self._working_dir, "supervisord.conf")
-        fd = os.open(conffile, os.O_WRONLY | os.O_CREAT)
+        fd = os.open(conffile, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
 
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         try:
@@ -197,8 +234,27 @@ class SupD(object):
         parser.write(str_io)
         os.write(conffile_fd, str_io.getvalue())
 
+    def delete(self):
+        for p in self._data_object.programs:
+            self._supd_db.db_obj_delete(p)
+        self._supd_db.db_obj_delete(self._data_object)
+        self._supd_db.db_commit()
 
 
+    def get_all_state(self):
+        sup = self._proxy.supervisor
+        state = sup.getAllProcessInfo()
+        return state
 
-            
 
+    def get_name(self):
+        return self._data_object.name
+
+
+def _run_log(cmd, log):
+    #p = Popen(cmd, shell=True)
+    #(so, se) = p.communicate()
+    #log.log(logging.INFO, "%s\n\tstdout=%s\n\tstderr=%s" % (cmd, so, se))
+    #rc = os.waitpid(p.pid, 0)[1]
+    rc = os.system(cmd)
+    return rc

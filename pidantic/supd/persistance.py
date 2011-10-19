@@ -1,3 +1,4 @@
+import logging
 import sqlalchemy
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relation
@@ -10,14 +11,13 @@ from sqlalchemy import String, MetaData, Sequence
 from sqlalchemy import Column
 from sqlalchemy import types
 from datetime import datetime
-import os
-
 
 metadata = MetaData()
 
 
 supd_table = Table('supd', metadata,
     Column('id', Integer, Sequence('sup_id_seq'), primary_key=True),
+    Column('name', String(1024)),
     Column('pidfile', String(1024)),
     Column('logfile', String(1024)),
     Column('loglevel', String(16), default="info"),
@@ -35,11 +35,11 @@ program_table = Table('program', metadata,
     Column('umask', Integer, default='022'),
     Column('priority', Integer, default=999),
     Column('autostart', Boolean, default=True),
-    Column('autorestart', Boolean, default=True),
-    Column('startsecs', Integer, default=10),
+    Column('autorestart', String(16), default="False"),
+    Column('startsecs', Integer, default=0),
     Column('startretries', Integer, default=3),
+    Column('exitcodes', String(32), default="0"),
 
-#;exitcodes=0,2                 ; 'expected' exit codes for process (default 0,2)
 #;stopsignal=QUIT               ; signal used to kill process (default TERM)
 #;stopwaitsecs=10               ; max num secs to wait b4 SIGKILL (default 10)
 #;user=chrism                   ; setuid to this UNIX account to run the program
@@ -66,14 +66,13 @@ program_table = Table('program', metadata,
 
 class SupDDataObject(object):
     def __init__(self):
+        self.name= None
         self.pidfile = None
         self.logfile = None
         self.unix_socket_file = None
         self.timestamp = None
         self.id = None
         self.programs = []
-
-
 
 class SupDProgramDataObject(object):
 
@@ -108,10 +107,15 @@ class SupDDB(object):
         self._Session = sessionmaker(bind=self._engine)
         self._session = self._Session()
 
-
     def db_obj_add(self, obj):
         self._session.add(obj)
 
     def db_commit(self):
         self._session.commit()
 
+    def get_all_supds(self, log=logging):
+        all_supd_dbs = self._session.query(SupDDataObject).all()
+        return all_supd_dbs
+
+    def db_obj_delete(self, obj):
+        self._session.delete(obj)
