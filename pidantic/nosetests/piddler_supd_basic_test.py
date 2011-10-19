@@ -11,7 +11,7 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory='tempdir')
+        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory=tempdir)
         state = pidantic.get_state()
         while not pidantic.is_done():
             factory.poll()
@@ -21,7 +21,7 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory='tempdir')
+        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory=tempdir)
         state = pidantic.get_state()
         while not pidantic.is_done():
             factory.poll()
@@ -32,7 +32,7 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/true", process_name="true", directory='tempdir')
+        pidantic = factory.get_pidantic(command="/bin/true", process_name="true", directory=tempdir)
         while not pidantic.is_done():
             factory.poll()
         rc = pidantic.get_result_code()
@@ -43,7 +43,7 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/false", process_name="false", directory='tempdir')
+        pidantic = factory.get_pidantic(command="/bin/false", process_name="false", directory=tempdir)
         while not pidantic.is_done():
             factory.poll()
         rc = pidantic.get_result_code()
@@ -54,8 +54,8 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        false_pid = factory.get_pidantic(command="/bin/false", process_name="false", directory='tempdir')
-        true_pid = factory.get_pidantic(command="/bin/false", process_name="false", directory='tempdir')
+        true_pid = factory.get_pidantic(command="/bin/true", process_name="true", directory=tempdir)
+        false_pid = factory.get_pidantic(command="/bin/false", process_name="false", directory=tempdir)
         while not false_pid.is_done() or not true_pid.is_done():
             factory.poll()
         rc = false_pid.get_result_code()

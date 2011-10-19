@@ -50,6 +50,7 @@ class PIDanticStateMachine(object):
         self.set_mapping("STATE_RUNNING", "EVENT_EXITED", "STATE_EXITED", o.stopped)
         self.set_mapping("STATE_RUNNING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.stopping)
         self.set_mapping("STATE_RUNNING", "EVENT_FAULT", "STATE_STOPPING", o.run_fault)
+        self.set_mapping("STATE_RUNNING", "EVENT_RUNNING", "STATE_RUNNING", None)
 
         self.set_mapping("STATE_STOPPING_RESTART", "EVENT_EXITED", "STATE_STARTING", o.starting)
         self.set_mapping("STATE_STOPPING_RESTART", "EVENT_FAULT", "STATE_STOPPING_RESTART", o.restart_fault)
