@@ -4,7 +4,6 @@ import fcntl
 from gevent import Greenlet
 import gevent
 import os
-import time
 from pidantic.pidbase import PIDanticStateMachineBase
 
 def _make_nonblocking(filelike):
@@ -22,7 +21,7 @@ def _poller(pidfork):
 def read_nonblocking(fd, size):
     try:
         data = os.read(fd, size)
-    except IOError, osex:
+    except OSError, osex:
         if osex.errno != 11:
             raise
         data = None
@@ -101,9 +100,9 @@ class PIDanticFork(PIDanticStateMachineBase):
     WRITE_PIPE_ENV = "PIDANTIC_WRITE_PIPE_FD"
     READ_PIPE_ENV = "PIDANTIC_READ_PIPE_FD"
 
-    def __init__(self, argv, event_callback=None, log=logging, use_channel=False, channel_is_stdio=False, **kwargs):
-        PIDanticStateMachineBase.__init__(self, argv, event_callback=event_callback, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio, **kwargs)
-        self._argv = argv
+    def __init__(self, event_callback=None, log=logging, use_channel=False, channel_is_stdio=False, **kwargs):
+        PIDanticStateMachineBase.__init__(self, event_callback=event_callback, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio, **kwargs)
+        self._argv = kwargs['argv']
 
     def starting(self):
         self._p = None

@@ -76,7 +76,7 @@ class SupDDataObject(object):
 
 class SupDProgramDataObject(object):
 
-    def new(self):
+    def __init__(self):
         self.id = None
         self.supd_id = None
         self.command = None
@@ -106,6 +106,9 @@ class SupDDB(object):
         metadata.create_all(self._engine)
         self._Session = sessionmaker(bind=self._engine)
         self._session = self._Session()
+
+    def close(self):
+        self._session.close()
 
     def db_obj_add(self, obj):
         self._session.add(obj)

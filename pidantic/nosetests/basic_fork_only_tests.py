@@ -1,11 +1,11 @@
 import uuid
 import unittest
-from pidantic.pidfork import PIDanticFork
+from pidantic.fork.pidfork import PIDanticFork
 
 class BasicTestFork(unittest.TestCase):
 
     def test_simple_true(self):
-        pidant = PIDanticFork("/bin/true")
+        pidant = PIDanticFork(argv="/bin/true")
         pidant.start()
         while not pidant.is_done():
             pidant.poll()
@@ -15,7 +15,7 @@ class BasicTestFork(unittest.TestCase):
         self.assertEqual(rc, 0)
 
     def test_simple_false(self):
-        pidant = PIDanticFork("/bin/false")
+        pidant = PIDanticFork(argv="/bin/false")
         pidant.start()
         while not pidant.is_done():
             pidant.poll()
@@ -23,7 +23,7 @@ class BasicTestFork(unittest.TestCase):
         self.assertNotEqual(rc, 0)
 
     def test_terminate(self):
-        pidant = PIDanticFork("/bin/sleep 100")
+        pidant = PIDanticFork(argv="/bin/sleep 100")
         pidant.start()
         pidant.terminate()
         while not pidant.is_done():
@@ -31,18 +31,9 @@ class BasicTestFork(unittest.TestCase):
         rc = pidant.get_result_code()
         self.assertNotEqual(rc, 0)
 
-    def test_restart(self):
-        pidant = PIDanticFork("/bin/sleep 1")
-        pidant.start()
-        pidant.poll()
-        pidant.restart()
-        while not pidant.is_done():
-            pidant.poll()
-        rc = pidant.get_result_code()
-        self.assertEqual(rc, 0)
 
     def test_larger_stdout(self):
-        pidant = PIDanticFork("/bin/cat /etc/group")
+        pidant = PIDanticFork(argv="/bin/cat /etc/group")
         pidant.start()
         data = ""
         while not pidant.is_done():
@@ -61,7 +52,7 @@ class BasicTestFork(unittest.TestCase):
 
     def test_basic_stdout(self):
         message = str(uuid.uuid4()) + "Helloeworld"
-        pidant = PIDanticFork("/bin/echo %s" % (message))
+        pidant = PIDanticFork(argv="/bin/echo %s" % (message))
         pidant.start()
         data = ""
         while not pidant.is_done():
@@ -80,7 +71,7 @@ class BasicTestFork(unittest.TestCase):
 
     def test_basic_stderr(self):
         message = str(uuid.uuid4()) + "Hello stderr"
-        pidant = PIDanticFork("/bin/echo %s >&2" % (message))
+        pidant = PIDanticFork(argv="/bin/echo %s >&2" % (message))
         pidant.start()
         data = ""
         while not pidant.is_done():
@@ -100,14 +91,14 @@ class BasicTestFork(unittest.TestCase):
 
     def test_basic_stdin_terminate(self):
         message = str(uuid.uuid4()) + "Hello stderr"
-        pidant = PIDanticFork("/bin/cat")
+        pidant = PIDanticFork(argv="/bin/cat")
         pidant.start()
         pidant.send_stdin(message)
         pidant.poll()
         pidant.terminate()                
 
     def test_terminate_kill(self):
-        pidant = PIDanticFork("/bin/cat")
+        pidant = PIDanticFork(argv="/bin/cat")
         pidant.start()
         pidant.poll()
         pidant.terminate()

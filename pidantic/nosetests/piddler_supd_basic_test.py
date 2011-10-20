@@ -1,4 +1,5 @@
 import tempfile
+from pidantic.pidantic_exceptions import PIDanticStateException
 from pidantic.supd.pidsupd import SupDPidanticFactory
 
 __author__ = 'bresnaha'
@@ -64,6 +65,72 @@ class PIDSupBasicTest(unittest.TestCase):
         self.assertEqual(rc, 0)
         factory.terminate()
 
+    def simple_terminate_test(self):
+
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        factory.poll()
+        pidantic.terminate()
+        while not pidantic.is_done():
+            factory.poll()
+        rc = pidantic.get_result_code()
+        self.assertNotEqual(rc, 0)
+        factory.terminate()
+
+    def simple_double_terminate_kill_test(self):
+
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        factory.poll()
+        pidantic.terminate()
+        pidantic.terminate()
+        while not pidantic.is_done():
+            factory.poll()
+        rc = pidantic.get_result_code()
+        self.assertNotEqual(rc, 0)
+        factory.terminate()
+
+    def simple_get_state_start_test(self):
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        state = pidantic.get_state()
+        self.assertEquals(state, "STATE_STARTING")
+        factory.terminate()
+
+    def simple_get_state_exit_test(self):
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory=tempdir)
+        while not pidantic.is_done():
+            factory.poll()
+        state = pidantic.get_state()
+        self.assertEquals(state, "STATE_EXITED")
+        factory.terminate()
+
+
+    def imediately_terminate_facorty_with_running_pgm_test(self):
+
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        factory.terminate()
+
+
+    def terminate_done_test(self):
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory=tempdir)
+        while not pidantic.is_done():
+            factory.poll()
+        try:
+            pidantic.terminate()
+            self.assertFalse(True, "should not get here")
+        except PIDanticStateException:
+            pass
+        factory.terminate()
 
         
 if __name__ == '__main__':

@@ -4,9 +4,6 @@ import os
 import uuid
 from pidantic.supd.persistance import SupDDB
 from pidantic.supd.supd import SupD
-
-__author__ = 'bresnaha'
-
 import unittest
 
 class BasicSupDTests(unittest.TestCase):
@@ -27,7 +24,7 @@ class BasicSupDTests(unittest.TestCase):
         self.supd.ping()
 
     def test_run_program(self):
-        self.supd.run_program("/bin/true", process_name="test")
+        self.supd.run_program(command="/bin/true", process_name="test")
 
     def test_get_state(self):
         state = self.supd.getState()
@@ -44,7 +41,7 @@ class BasicSupDTests(unittest.TestCase):
 
     def test_run_status(self):
         proc_name = "testcat"
-        self.supd.run_program("/bin/cat", process_name=proc_name)
+        self.supd.run_program(command="/bin/cat", process_name=proc_name)
         rc = self.supd.get_program_status(proc_name)
         self.assertEqual(rc['group'], proc_name)
         self.assertEqual(rc['name'], proc_name)
@@ -52,8 +49,8 @@ class BasicSupDTests(unittest.TestCase):
     def test_run_two_status(self):
         proc_name1 = "testcat"
         proc_name2 = "true"
-        self.supd.run_program("/bin/cat", process_name=proc_name1)
-        self.supd.run_program("/bin/true", process_name=proc_name2)
+        self.supd.run_program(command="/bin/cat", process_name=proc_name1)
+        self.supd.run_program(command="/bin/true", process_name=proc_name2)
         rc = self.supd.get_program_status(proc_name1)
         self.assertEqual(rc['group'], proc_name1)
         self.assertEqual(rc['name'], proc_name1)

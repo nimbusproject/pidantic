@@ -58,6 +58,9 @@ class PIDanticStateMachine(object):
         self.set_mapping("STATE_STOPPING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.kill)
         self.set_mapping("STATE_STOPPING", "EVENT_EXITED", "STATE_EXITED", o.stopped)
         self.set_mapping("STATE_STOPPING", "EVENT_FAULT", "STATE_STOPPING", o.stopping_fault)
+        # the next state just occurs because the process hasnt gotten the message yet
+        self.set_mapping("STATE_STOPPING", "EVENT_RUNNING", "STATE_STOPPING", None)
+
 
         self.set_mapping("STATE_EXITED", "EVENT_START_REQUEST", "STATE_STARTING", o.starting)
         self.set_mapping("STATE_EXITED", "EVENT_EXITED", "STATE_EXITED", None)
