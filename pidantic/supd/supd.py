@@ -250,6 +250,9 @@ class SupD(object):
     def get_name(self):
         return self._data_object.name
 
+    def get_error_message(self):
+        return ""
+
 
 def _run_log(cmd, log):
     #p = Popen(cmd, shell=True)

@@ -73,6 +73,8 @@ class SupDPidanticFactory(PidanticFactory):
     def _is_alive(self):
         self._supd.ping()
 
+    def get_name(self):
+        return self._name
 
     def get_pidantic(self, **kwvals):
 
@@ -107,7 +109,7 @@ class SupDPidanticFactory(PidanticFactory):
         for state in all_state:
             name = state['name']
             if name not in self._watched_processes.keys():
-                self._log.log(logging.ERROR, "Supervisord is reporting an unknow process %s" % (name))
+                self._log.log(logging.ERROR, "Supervisord is reporting an unknown process %s" % (name))
         
             pidsupd = self._watched_processes[name]
             pidsupd._process_state_change(state)

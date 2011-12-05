@@ -28,6 +28,9 @@ class PIDantic(object):
         self._channel_is_stdio = channel_is_stdio
         self._event_callback = event_callback
 
+    def get_name(self):
+        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+    
     def poll(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
@@ -35,6 +38,9 @@ class PIDantic(object):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
     def get_state(self):
+        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+
+    def get_error_message(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
     def terminate(self):
