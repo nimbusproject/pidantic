@@ -5,6 +5,7 @@ from pidantic.pidantic_exceptions import PIDanticUsageException
 from pidantic.supd.persistance import SupDDB
 from pidantic.supd.supd import SupD
 from pidantic.ui import PidanticFactory
+import sys
 
 def _set_param_or_default(kwvals, key, default=None):
     try:
@@ -24,6 +25,7 @@ class SupDPidanticFactory(PidanticFactory):
     ]
     init_optional_keywords = [
         "log",
+        "supdexe",
     ]
 
     run_needed_keywords = [
@@ -47,6 +49,9 @@ class SupDPidanticFactory(PidanticFactory):
         self._working_dir = kwvals['directory']
         self._name = kwvals['name']
         self._log = _set_param_or_default(kwvals, "log", logging)
+        supd_exe = _set_param_or_default(kwvals, "supdexe", "%s/bin/supervisord" % sys.prefix)
+        if not os.path.exists(supd_exe):
+            raise PIDanticUsageException("No supervisord executable found")
         self._watched_processes = {}
 
         db_url = "sqlite:///%s/supd.db" % (self._working_dir)
@@ -60,8 +65,7 @@ class SupDPidanticFactory(PidanticFactory):
             template = os.path.join(self._working_dir, "supd.template")
             if not os.path.exists(template):
                 template = None
-            exe = "/home/bresnaha/pycharmVE/bin/supervisord"
-            self._supd = SupD(self._db, name=self._name, template=template, log=self._log, executable=exe, dirpath=self._working_dir)
+            self._supd = SupD(self._db, name=self._name, template=template, log=self._log, executable=supd_exe, dirpath=self._working_dir)
         else:
             if supd_db_a[0].name != self._name:
                 raise PIDanticUsageException("The requested supd name %s is not in the db" % (self._name))
@@ -96,8 +100,8 @@ class SupDPidanticFactory(PidanticFactory):
 
     def stored_instances(self):
         stored = []
-        program_objects = self._supd.get_data_object()
-        for p in program_objects:
+        data_obj = self._supd.get_data_object()
+        for p in data_obj.programs:
             pidsupd = PIDanticSupD(p, self._supd, log=self._log)
             stored.append(pidsupd)
             self._watched_processes[p.process_name] = pidsupd
@@ -128,6 +132,9 @@ class PIDanticSupD(PIDanticStateMachineBase):
         self._exit_code = None
         self._exception = None
         self._run_once = False
+
+    def get_name(self):
+        return self._program_object.process_name
 
     def starting(self):
         self._log.log(logging.INFO, "%s Starting" % (self._program_object.process_name))

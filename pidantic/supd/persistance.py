@@ -23,6 +23,7 @@ supd_table = Table('supd', metadata,
     Column('loglevel', String(16), default="info"),
     Column('unix_socket_file', String(1024)),
     Column('timestamp', types.TIMESTAMP(), default=datetime.now()),
+    Column('base_dir', String(1024)),
     )
 
 program_table = Table('program', metadata,
@@ -66,30 +67,13 @@ program_table = Table('program', metadata,
 
 class SupDDataObject(object):
     def __init__(self):
-        self.name= None
-        self.pidfile = None
-        self.logfile = None
-        self.unix_socket_file = None
-        self.timestamp = None
-        self.id = None
         self.programs = []
 
 class SupDProgramDataObject(object):
 
     def __init__(self):
-        self.id = None
-        self.supd_id = None
-        self.command = None
-        self.process_name = None
-        self.numprocs = None
-        self.directory = None
-        self.umask = None
-        self.priority = None
-        self.autostart = None
-        self.autorestart = None
-        self.startsecs = None
-        self.startretries = None
-
+        pass
+    
 mapper(SupDProgramDataObject, program_table)
 mapper(SupDDataObject, supd_table, properties={
     'programs': relation(SupDProgramDataObject, backref="supd")})

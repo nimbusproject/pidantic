@@ -1,4 +1,3 @@
-from subprocess import Popen
 import supervisor.xmlrpc
 import xmlrpclib
 from supervisor import xmlrpc
@@ -9,7 +8,6 @@ import fcntl
 import os
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 from pidantic.supd.persistance import SupDDataObject, SupDProgramDataObject
-
 
 
 def get_all_supds(supd_db, log=logging):
@@ -50,6 +48,7 @@ class SupD(object):
             data_object.pidfile = os.path.join(self._working_dir, "supd.pid")
             data_object.unix_socket_file = os.path.join(self._working_dir, "supd.sock")
             data_object.name = name
+            data_object.base_dir = dirpath
 
             self._data_object = data_object
             conf_file_name = self.write_conf()
@@ -61,6 +60,7 @@ class SupD(object):
             supd_db.db_commit()
         else:
             self._data_object = data_object
+            self._working_dir = os.path.join(data_object.base_dir, data_object.name)
 
         url = "unix://" + data_object.unix_socket_file
         # hard coded username and pw because this lib insists on unix domain sockets
@@ -91,11 +91,11 @@ class SupD(object):
             program_object.directory = self._working_dir
         self._supd_db.db_obj_add(program_object)
         self._data_object.programs.append(program_object)
+        self._supd_db.db_commit()
         self.write_conf()
 
         # reread supd
         rc = self._reread()
-        self._supd_db.db_commit()
         return program_object
 
     def getState(self):
