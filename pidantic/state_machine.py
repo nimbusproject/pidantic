@@ -3,12 +3,13 @@ from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticStateEx
 
 class PIDanticState:
     STATE_PENDING = "STATE_PENDING"
-    STATE_STOPPED = "STATE_STOPPED"
+    STATE_REQUEST_CANCELED = "STATE_REQUEST_CANCELED"
     STATE_STARTING = "STATE_STARTING"
     STATE_RUNNING = "STATE_RUNNING"
     STATE_STOPPING = "STATE_STOPPING"
     STATE_STOPPING_RESTART = "STATE_STOPPING_RESTART"
     STATE_EXITED = "STATE_EXITED"
+    STATE_TERMINATED = "STATE_TERMINATED"
 
 PIDanticStatesList = [d for d in dir(PIDanticState) if d.find("STATE_") == 0]
 
@@ -17,8 +18,9 @@ class PIDanticEvents:
     EVENT_RUNNING = "EVENT_RUNNING"
     EVENT_FAULT = "EVENT_FAULT"
     EVENT_STOP_REQUEST = "EVENT_STOP_REQUEST"
-    EVENT_EXITED = "EVENT_EXITED",
+    EVENT_EXITED = "EVENT_EXITED"
     EVENT_RESTART = "EVENT_RESTART"
+    EVENT_CANCEL_REQUEST = "EVENT_CANCEL_REQUEST"
 
 PIDanticEventsList = [d for d in dir(PIDanticEvents) if d.find("EVENT_") == 0]
 
@@ -36,35 +38,36 @@ class PIDanticStateMachine(object):
 
         self._last_state = None
         self._last_event = None
-        self._current_state = "STATE_PENDING"
+        self._current_state = PIDanticState.STATE_PENDING
 
         self._log = log
 
-        self.set_mapping("STATE_PENDING", "EVENT_START_REQUEST", "STATE_STARTING", o.starting)
+        self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, o.sm_starting)
+        self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
 
-        self.set_mapping("STATE_STARTING", "EVENT_RUNNING", "STATE_RUNNING", o.started)
-        self.set_mapping("STATE_STARTING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.start_canceled)
-        self.set_mapping("STATE_STARTING", "EVENT_FAULT", "STATE_STOPPING", o.start_fault)
-        self.set_mapping("STATE_STARTING", "EVENT_EXITED", "STATE_STOPPING", o.stopped)
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, o.sm_started)
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_start_canceled)
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STARTING, o.sm_start_fault)
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
 
-        self.set_mapping("STATE_RUNNING", "EVENT_EXITED", "STATE_EXITED", o.stopped)
-        self.set_mapping("STATE_RUNNING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.stopping)
-        self.set_mapping("STATE_RUNNING", "EVENT_FAULT", "STATE_STOPPING", o.run_fault)
-        self.set_mapping("STATE_RUNNING", "EVENT_RUNNING", "STATE_RUNNING", None)
+        self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
+        self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_stopping)
+        self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING, o.sm_run_fault)
+        self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, None)
 
-        self.set_mapping("STATE_STOPPING_RESTART", "EVENT_EXITED", "STATE_STARTING", o.starting)
-        self.set_mapping("STATE_STOPPING_RESTART", "EVENT_FAULT", "STATE_STOPPING_RESTART", o.restart_fault)
+        self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_STARTING, o.sm_starting)
+        self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING_RESTART, o.sm_restart_fault)
 
-        self.set_mapping("STATE_STOPPING", "EVENT_STOP_REQUEST", "STATE_STOPPING", o.kill)
-        self.set_mapping("STATE_STOPPING", "EVENT_EXITED", "STATE_EXITED", o.stopped)
-        self.set_mapping("STATE_STOPPING", "EVENT_FAULT", "STATE_STOPPING", o.stopping_fault)
+        self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_kill)
+        self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
+        self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING, o.sm_stopping_fault)
         # the next state just occurs because the process hasnt gotten the message yet
-        self.set_mapping("STATE_STOPPING", "EVENT_RUNNING", "STATE_STOPPING", None)
+        self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_STOPPING, None)
 
+        self.set_mapping(PIDanticState.STATE_EXITED, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, o.sm_starting)
+        self.set_mapping(PIDanticState.STATE_EXITED, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, None)
 
-        self.set_mapping("STATE_EXITED", "EVENT_START_REQUEST", "STATE_STARTING", o.starting)
-        self.set_mapping("STATE_EXITED", "EVENT_EXITED", "STATE_EXITED", None)
-
+        self.set_mapping(PIDanticState.STATE_TERMINATED, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, None)
 
     def set_mapping(self, state, event, next_state, function):
         if state not in PIDanticStatesList:
@@ -97,7 +100,7 @@ class PIDanticStateMachine(object):
         self._log.log(logging.INFO, "Moved from state %s to state %s because of event %s" % (old_state, next_state, event))
 
     def is_done(self):
-        return self._current_state == "STATE_EXITED"
+        return self._current_state == PIDanticState.STATE_EXITED or self._current_state == PIDanticState.STATE_TERMINATED
 
     def get_state(self):
         return self._current_state

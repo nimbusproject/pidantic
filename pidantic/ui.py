@@ -30,7 +30,13 @@ class PIDantic(object):
 
     def get_name(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
-    
+
+    def start(self):
+        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+
+    def cancel_request(self):
+        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+
     def poll(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 

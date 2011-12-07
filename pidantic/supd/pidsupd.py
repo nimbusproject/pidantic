@@ -90,9 +90,8 @@ class SupDPidanticFactory(PidanticFactory):
             if p not in self.run_needed_keywords and p not in self.run_optional_keywords:
                 raise PIDanticUsageException("The driver %s does not know the parameter %s." % (self.driver_name, p))
 
-        program_object = self._supd.run_program(**kwvals)
+        program_object = self._supd.create_program_db(**kwvals)
         pidsupd = PIDanticSupD(program_object, self._supd, log=self._log)
-        pidsupd.start()
 
         self._watched_processes[program_object.process_name] = pidsupd
 
@@ -133,42 +132,48 @@ class PIDanticSupD(PIDanticStateMachineBase):
         self._exception = None
         self._run_once = False
 
+    def get_error_message(self):
+        return str(self._exception)
+
     def get_name(self):
         return self._program_object.process_name
 
-    def starting(self):
+    def sm_starting(self):
         self._log.log(logging.INFO, "%s Starting" % (self._program_object.process_name))
+        self._supd.run_program(self._program_object)
 
-    def started(self):
+    def sm_request_canceled(self):
+        self._log.log(logging.INFO, "%s request canceled" % (self._program_object.process_name))
+
+    def sm_started(self):
         self._log.log(logging.INFO, "%s Successfully started" % (self._program_object.process_name))
 
-    def start_canceled(self):
+    def sm_start_canceled(self):
         self._supd.terminate_program(self._program_object.process_name)
 
-    def start_fault(self):
+    def sm_start_fault(self):
         self._log.log(logging.INFO, "%s Start fault" % (self._program_object.process_name))
     
-    def exited(self):
+    def sm_exited(self):
         self._log.log(logging.INFO, "%s Exited" % (self._program_object.process_name))
 
-    def stopping(self):
+    def sm_stopping(self):
         self._supd.terminate_program(self._program_object.process_name)
 
-    def kill(self):
+    def sm_kill(self):
         self._supd.terminate_program(self._program_object.process_name)
 
-    def run_fault(self):
+    def sm_run_fault(self):
         self._log.log(logging.INFO, "%s run fault" % (self._program_object.process_name))
 
-    def stopped(self):
+    def sm_stopped(self):
         self._log.log(logging.INFO, "%s Stopped" % (self._program_object.process_name))
 
-    def stopping_fault(self):
+    def sm_stopping_fault(self):
         self._log.log(logging.INFO, "%s Stopping fault" % (self._program_object.process_name))
 
-    def restart_fault(self):
+    def sm_restart_fault(self):
         self._log.log(logging.INFO, "%s Re-Starting fault" % (self._program_object.process_name))
-
 
     def get_result_code(self):
         return self._exit_code

@@ -24,6 +24,10 @@ class PIDanticStateMachineBase(PIDantic):
     def get_state(self):
         return self._sm.get_state()
 
+    def cancel_request(self):
+        event = "EVENT_CANCEL_REQUEST"
+        self._send_event(event)
+
     def start(self):
         event = "EVENT_START_REQUEST"
         self._send_event(event)

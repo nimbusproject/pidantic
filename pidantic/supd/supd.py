@@ -80,7 +80,7 @@ class SupD(object):
     def get_data_object(self):
         return self._data_object
 
-    def run_program(self, **kwargs):
+    def create_program_db(self, **kwargs):
 
         program_object = SupDProgramDataObject()
         for key in kwargs:
@@ -92,11 +92,23 @@ class SupD(object):
         self._supd_db.db_obj_add(program_object)
         self._data_object.programs.append(program_object)
         self._supd_db.db_commit()
-        self.write_conf()
 
-        # reread supd
-        rc = self._reread()
         return program_object
+
+    def run_program(self, program_object):
+        program_object.two_phase_state = 1
+        self._supd_db.db_commit()
+        self.write_conf()
+        rc = self._reread()
+        return rc
+
+    def mark_program_error(self, program_object, message):
+        program_object.two_phase_state = 3
+        program_object.two_phase_error_message = message
+        self._supd_db.db_commit()
+        self.write_conf()
+        rc = self._reread()
+        return rc
 
     def getState(self):
         sup = self._proxy.supervisor
@@ -222,6 +234,8 @@ class SupD(object):
             parser.set("rpcinterface:supervisor", "supervisor.rpcinterface_factory", "supervisor.rpcinterface:make_main_rpcinterface")
 
         for p in data_object.programs:
+            if p.two_phase_state != 1:
+                continue
             s = "program:%s" % (p.process_name)
             try:
                 parser.add_section(s)

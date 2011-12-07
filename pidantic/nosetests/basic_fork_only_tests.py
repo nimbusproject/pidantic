@@ -10,7 +10,7 @@ class BasicTestFork(unittest.TestCase):
         while not pidant.is_done():
             pidant.poll()
         state = pidant.get_state()
-        self.assertEqual(state, "STATE_EXITED")
+        self.assertEqual(state, PIDanticState.STATE_EXITED)
         rc = pidant.get_result_code()
         self.assertEqual(rc, 0)
 
