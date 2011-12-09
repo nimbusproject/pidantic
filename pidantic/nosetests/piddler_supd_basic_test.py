@@ -91,7 +91,7 @@ class PIDSupBasicTest(unittest.TestCase):
 
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        pidantic = factory.get_pidantic(command="/bin/sleep 5000", process_name="longnap", directory=tempdir)
         pidantic.start()
         factory.poll()
         pidantic.terminate()

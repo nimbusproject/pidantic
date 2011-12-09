@@ -12,6 +12,7 @@ from sqlalchemy import Column
 from sqlalchemy import types
 from datetime import datetime
 from sqlalchemy.pool import NullPool
+from pidantic.state_machine import PIDanticState
 
 metadata = MetaData()
 
@@ -41,8 +42,8 @@ program_table = Table('program', metadata,
     Column('startsecs', Integer, default=0),
     Column('startretries', Integer, default=3),
     Column('exitcodes', String(32), default="0"),
-    Column('two_phase_state', Integer, default=0),  # 0: registered, 1: submitted, 2: error
-    Column('two_phase_error_message', String(128), default=""),
+    Column('last_known_state', String(64), default=PIDanticState.STATE_PENDING),  # 0: registered, 1: submitted, 2: error
+
 
 
 #;stopsignal=QUIT               ; signal used to kill process (default TERM)

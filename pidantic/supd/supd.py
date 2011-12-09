@@ -1,3 +1,4 @@
+from pidantic.state_machine import PIDanticState
 import supervisor.xmlrpc
 import xmlrpclib
 from supervisor import xmlrpc
@@ -85,9 +86,7 @@ class SupD(object):
             program_object.__setattr__(key, kwargs[key])
         if not program_object.directory:
             program_object.directory = self._working_dir
-        program_object.two_phase_state = 0
         self._supd_db.db_obj_add(program_object)
-
         data_object = self._data_object
         data_object.programs.append(program_object)
         self._supd_db.db_commit()
@@ -95,16 +94,10 @@ class SupD(object):
         return program_object
 
     def run_program(self, program_object):
-        program_object.two_phase_state = 1
         self._supd_db.db_commit()
         self.write_conf()
         rc = self._reread()
         return rc
-
-    def mark_program_error(self, program_object, message):
-        program_object.two_phase_state = 2
-        program_object.two_phase_error_message = message
-        self._supd_db.db_commit()
 
     def getState(self):
         sup = self._proxy.supervisor
@@ -230,7 +223,7 @@ class SupD(object):
             parser.set("rpcinterface:supervisor", "supervisor.rpcinterface_factory", "supervisor.rpcinterface:make_main_rpcinterface")
 
         for p in data_object.programs:
-            if p.two_phase_state != 1:
+            if p.last_known_state in [PIDanticState.STATE_PENDING, PIDanticState.STATE_REQUEST_CANCELED]:
                 continue
             s = "program:%s" % (p.process_name)
             try:

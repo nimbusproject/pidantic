@@ -99,7 +99,6 @@ class SupDPidanticFactory(PidanticFactory):
 
         program_object = self._supd.create_program_db(**kwvals)
         pidsupd = PIDanticSupD(program_object, self._supd, log=self._log)
-
         self._watched_processes[program_object.process_name] = pidsupd
 
         return pidsupd
@@ -135,18 +134,12 @@ class SupDPidanticFactory(PidanticFactory):
 class PIDanticSupD(PIDanticStateMachineBase):
 
     def __init__(self, program_object, supd, log=logging, use_channel=False, channel_is_stdio=False):
-        PIDanticStateMachineBase.__init__(self, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio)
         self._program_object = program_object
         self._supd = supd
         self._exit_code = None
         self._exception = None
         self._run_once = False
-
-        # find the initial state
-        if program_object.two_phase_state == 2:
-            # we need to do this so that the internal state is marked as rejected in the event of restart
-            self.cancel_request()
-        #elif program_object.two_phase_state == 0:
+        PIDanticStateMachineBase.__init__(self, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio)
 
     def get_error_message(self):
         return str(self._exception)
@@ -154,13 +147,19 @@ class PIDanticSupD(PIDanticStateMachineBase):
     def get_name(self):
         return self._program_object.process_name
 
+    def sm_get_starting_state(self):
+        return self._program_object.last_known_state
+
+    def sm_state_changed(self, new_state):
+        self._program_object.last_known_state = new_state
+        self._supd._supd_db.db_commit()
+
     def sm_starting(self):
         self._log.log(logging.INFO, "%s Starting" % (self._program_object.process_name))
         self._supd.run_program(self._program_object)
 
     def sm_request_canceled(self):
         self._log.log(logging.INFO, "%s request canceled" % (self._program_object.process_name))
-        self._supd.mark_program_error(self._program_object, "request canceled")
 
     def sm_started(self):
         self._log.log(logging.INFO, "%s Successfully started" % (self._program_object.process_name))
