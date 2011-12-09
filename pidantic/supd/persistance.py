@@ -1,7 +1,7 @@
 import logging
 import sqlalchemy
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relation, scoped_session
 from sqlalchemy.orm import mapper
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Table
@@ -11,13 +11,14 @@ from sqlalchemy import String, MetaData, Sequence
 from sqlalchemy import Column
 from sqlalchemy import types
 from datetime import datetime
+from sqlalchemy.pool import NullPool
 
 metadata = MetaData()
 
 
 supd_table = Table('supd', metadata,
     Column('id', Integer, Sequence('sup_id_seq'), primary_key=True),
-    Column('name', String(1024)),
+    Column('name', String(1024), unique=True),
     Column('pidfile', String(1024)),
     Column('logfile', String(1024)),
     Column('loglevel', String(16), default="info"),
@@ -76,7 +77,7 @@ class SupDProgramDataObject(object):
 
     def __init__(self):
         pass
-    
+
 mapper(SupDProgramDataObject, program_table)
 mapper(SupDDataObject, supd_table, properties={
     'programs': relation(SupDProgramDataObject, backref="supd")})
@@ -87,25 +88,26 @@ class SupDDB(object):
     def __init__(self, dburl, module=None):
 
         if module is None:
-            self._engine = sqlalchemy.create_engine(dburl)
+            self._engine = sqlalchemy.create_engine(dburl, connect_args={'check_same_thread':False})
         else:
-            self._engine = sqlalchemy.create_engine(dburl, module=module)
+            self._engine = sqlalchemy.create_engine(dburl, module=module, connect_args={'check_same_thread':False})
         metadata.create_all(self._engine)
-        self._Session = sessionmaker(bind=self._engine)
-        self._session = self._Session()
-
+        #self._Session = scoped_session(sessionmaker(bind=self._engine))
+        self._SessionX = sessionmaker(bind=self._engine)
+        self._Session = self._SessionX()
+        
     def close(self):
-        self._session.close()
+        self._Session.close()
 
     def db_obj_add(self, obj):
-        self._session.add(obj)
+        self._Session.add(obj)
 
     def db_commit(self):
-        self._session.commit()
+        self._Session.commit()
 
     def get_all_supds(self, log=logging):
-        all_supd_dbs = self._session.query(SupDDataObject).all()
+        all_supd_dbs = self._Session.query(SupDDataObject).all()
         return all_supd_dbs
 
     def db_obj_delete(self, obj):
-        self._session.delete(obj)
+        self._Session.delete(obj)

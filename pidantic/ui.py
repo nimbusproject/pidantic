@@ -3,6 +3,14 @@ import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException
 
 
+def not_implemented(func):
+    def call(self, *args,**kwargs):
+        def raise_error(func):
+            raise PIDanticUsageException("function %s must be implemented" % (func.func_name))
+        return raise_error(func)
+    return call
+
+
 class PidanticFactory(object):
 
     def __init__(self, **kwvals):
@@ -28,56 +36,74 @@ class PIDantic(object):
         self._channel_is_stdio = channel_is_stdio
         self._event_callback = event_callback
 
+    @not_implemented
     def get_name(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def start(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def cancel_request(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def poll(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def is_done(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def get_state(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def get_error_message(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def terminate(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def send_stdin(self, data):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def recv_stdout(self, len=None):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def recv_stderr(self, len=None):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def send_channel(self, data):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def recv_channel(self, len=None):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def has_read_channel(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def has_write_channel(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def has_stdin(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def has_stdout(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass
 
+    @not_implemented
     def has_stderr(self):
-        raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
+        pass

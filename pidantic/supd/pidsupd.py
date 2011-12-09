@@ -1,4 +1,5 @@
 import logging
+import datetime
 from pidantic.pidbase import PIDanticStateMachineBase
 import os
 from pidantic.pidantic_exceptions import PIDanticUsageException
@@ -10,6 +11,8 @@ import sys
 def _set_param_or_default(kwvals, key, default=None):
     try:
         rc = kwvals[key]
+        if rc == None:
+            rc = default
     except:
         rc = default
     return rc
@@ -46,6 +49,8 @@ class SupDPidanticFactory(PidanticFactory):
             if p not in self.init_needed_keywords and p not in self.init_optional_keywords:
                 raise PIDanticUsageException("The driver %s does not know the parameter %s." % (self.driver_name, p))
 
+        self._next_poll_time = datetime.datetime.now()
+        self._poll_interval = 0.5
         self._working_dir = kwvals['directory']
         self._name = kwvals['name']
         self._log = _set_param_or_default(kwvals, "log", logging)
@@ -73,6 +78,8 @@ class SupDPidanticFactory(PidanticFactory):
 
         self._is_alive()
 
+    def _get_next_poll_time(self):
+        self._next_poll_time = datetime.datetime.now() + datetime.timedelta(seconds=self._poll_interval)
 
     def _is_alive(self):
         self._supd.ping()
@@ -97,14 +104,14 @@ class SupDPidanticFactory(PidanticFactory):
 
         return pidsupd
 
-    def stored_instances(self):
-        stored = []
+    def reload_instances(self):
+        self._watched_processes = {}
         data_obj = self._supd.get_data_object()
         for p in data_obj.programs:
             pidsupd = PIDanticSupD(p, self._supd, log=self._log)
-            stored.append(pidsupd)
             self._watched_processes[p.process_name] = pidsupd
-        return stored
+        self.poll()
+        return self._watched_processes
 
     def poll(self):
         all_state = self._supd.get_all_state()
@@ -121,6 +128,9 @@ class SupDPidanticFactory(PidanticFactory):
         self._supd.terminate()
         self._supd.delete()
 
+    def _backoff(self):
+        self._poll_interval = self._poll_interval + (self._poll_interval * .5)
+        self._get_next_poll_time()
 
 class PIDanticSupD(PIDanticStateMachineBase):
 
@@ -131,6 +141,12 @@ class PIDanticSupD(PIDanticStateMachineBase):
         self._exit_code = None
         self._exception = None
         self._run_once = False
+
+        # find the initial state
+        if program_object.two_phase_state == 2:
+            # we need to do this so that the internal state is marked as rejected in the event of restart
+            self.cancel_request()
+        #elif program_object.two_phase_state == 0:
 
     def get_error_message(self):
         return str(self._exception)
@@ -144,6 +160,7 @@ class PIDanticSupD(PIDanticStateMachineBase):
 
     def sm_request_canceled(self):
         self._log.log(logging.INFO, "%s request canceled" % (self._program_object.process_name))
+        self._supd.mark_program_error(self._program_object, "request canceled")
 
     def sm_started(self):
         self._log.log(logging.INFO, "%s Successfully started" % (self._program_object.process_name))
@@ -224,9 +241,6 @@ class PIDanticSupD(PIDanticStateMachineBase):
             pass
         elif state_name == "RUNNING":
             event = "EVENT_RUNNING"
-        elif state_name == "BACKOFF":
-            # ignore this one its way to fatal
-            pass
         elif state_name == "STOPPING":
             # ignore this one and wait for stop event
             pass
@@ -239,6 +253,9 @@ class PIDanticSupD(PIDanticStateMachineBase):
             event = "EVENT_EXITED"
         elif state_name == "UNKNOWN":
             event = "EVENT_FAULT"
+        elif state_name == "BACKOFF":
+            event = "EVENT_EXITED"
+            self._exit_code = 100
 
         if event:
             self._send_event(event)

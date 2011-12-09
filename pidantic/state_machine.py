@@ -2,6 +2,7 @@ import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticStateException
 
 class PIDanticState:
+    STATE_INITIAL = "STATE_INITIAL"
     STATE_PENDING = "STATE_PENDING"
     STATE_REQUEST_CANCELED = "STATE_REQUEST_CANCELED"
     STATE_STARTING = "STATE_STARTING"
@@ -14,6 +15,7 @@ class PIDanticState:
 PIDanticStatesList = [d for d in dir(PIDanticState) if d.find("STATE_") == 0]
 
 class PIDanticEvents:
+    EVENT_INITIALIZED = "EVENT_START_INITIALIZED"
     EVENT_START_REQUEST = "EVENT_START_REQUEST"
     EVENT_RUNNING = "EVENT_RUNNING"
     EVENT_FAULT = "EVENT_FAULT"
@@ -38,13 +40,20 @@ class PIDanticStateMachine(object):
 
         self._last_state = None
         self._last_event = None
-        self._current_state = PIDanticState.STATE_PENDING
+        self._current_state = PIDanticState.STATE_INITIAL
 
         self._log = log
+
+        self.set_mapping(PIDanticState.STATE_INITIAL, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, None)
+        self.set_mapping(PIDanticState.STATE_INITIAL, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, None)
+        self.set_mapping(PIDanticState.STATE_INITIAL, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_EXITED, None)
+        self.set_mapping(PIDanticState.STATE_INITIAL, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
+        self.set_mapping(PIDanticState.STATE_INITIAL, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, o.sm_starting)
 
         self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, o.sm_starting)
         self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
 
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, o.sm_started)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_start_canceled)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STARTING, o.sm_start_fault)

@@ -49,15 +49,14 @@ class SupD(object):
             data_object.unix_socket_file = os.path.join(self._working_dir, "supd.sock")
             data_object.name = name
             data_object.base_dir = dirpath
-
+            supd_db.db_obj_add(data_object)
+            supd_db.db_commit()
             self._data_object = data_object
             conf_file_name = self.write_conf()
             cmd = "%s -c %s" % (executable, conf_file_name)
             rc = _run_log(cmd, self._log)
             if rc != 0:
                 raise PIDanticExecutionException("%s failed to execute | %d" % (cmd, rc))
-            supd_db.db_obj_add(data_object)
-            supd_db.db_commit()
         else:
             self._data_object = data_object
             self._working_dir = os.path.join(data_object.base_dir, data_object.name)
@@ -77,9 +76,6 @@ class SupD(object):
         rc = sup.getProcessInfo(name)
         return rc
 
-    def get_data_object(self):
-        return self._data_object
-
     def create_program_db(self, **kwargs):
 
         program_object = SupDProgramDataObject()
@@ -89,8 +85,11 @@ class SupD(object):
             program_object.__setattr__(key, kwargs[key])
         if not program_object.directory:
             program_object.directory = self._working_dir
+        program_object.two_phase_state = 0
         self._supd_db.db_obj_add(program_object)
-        self._data_object.programs.append(program_object)
+
+        data_object = self._data_object
+        data_object.programs.append(program_object)
         self._supd_db.db_commit()
 
         return program_object
@@ -103,12 +102,9 @@ class SupD(object):
         return rc
 
     def mark_program_error(self, program_object, message):
-        program_object.two_phase_state = 3
+        program_object.two_phase_state = 2
         program_object.two_phase_error_message = message
         self._supd_db.db_commit()
-        self.write_conf()
-        rc = self._reread()
-        return rc
 
     def getState(self):
         sup = self._proxy.supervisor
@@ -156,21 +152,21 @@ class SupD(object):
 
     def remove_program(self, name):
         program_object = None
-        for p in self._data_object.programs:
+        data_object = self._data_object
+        for p in data_object.programs:
             if p.process_name == name:
                 program_object = p
                 break
         if not program_object:
             raise PIDanticUsageException("%s is not a known program name" % (name))
 
-        self._data_object.programs.remove(program_object)
+        data_object.programs.remove(program_object)
         self._supd_db.db_obj_delete(program_object)
         self.write_conf()
         # reread supd
         rc = self._reread()
         self._supd_db.db_commit()
         return rc
-
 
     def terminate(self):
         sup = self._proxy.supervisor
@@ -249,11 +245,14 @@ class SupD(object):
         os.write(conffile_fd, str_io.getvalue())
 
     def delete(self):
-        for p in self._data_object.programs:
+        data_object = self._data_object
+        for p in data_object.programs:
             self._supd_db.db_obj_delete(p)
-        self._supd_db.db_obj_delete(self._data_object)
+        self._supd_db.db_obj_delete(data_object)
         self._supd_db.db_commit()
 
+    def get_data_object(self):
+        return self._data_object
 
     def get_all_state(self):
         sup = self._proxy.supervisor
@@ -262,7 +261,8 @@ class SupD(object):
 
 
     def get_name(self):
-        return self._data_object.name
+        data_object = self._data_object
+        return data_object.name
 
     def get_error_message(self):
         return ""
