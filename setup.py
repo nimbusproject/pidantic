@@ -26,7 +26,7 @@ setup(name='pidantic',
       keywords = "OOI PID process fork supervisord ION",
       long_description="""Some other time""",
       license="Apache2",
-      install_requires = [],
+      install_requires = ['supervisor', 'sqlalchemy', 'gevent'],
 
       classifiers=[
           'Development Status :: 4 - Beta',
