@@ -42,45 +42,6 @@ class BasicSupDTests(unittest.TestCase):
         self.assertEqual(state['statename'], "RUNNING")
         self.assertEqual(state['statecode'], 1)
 
-    def test_run_status(self):
-        proc_name = "testcat"
-        po = self.supd.create_program_db(command="/bin/cat", process_name=proc_name)
-        self.supd.run_program(po)
-
-        rc = self.supd.get_program_status(proc_name)
-        self.assertEqual(rc['group'], proc_name)
-        self.assertEqual(rc['name'], proc_name)
-
-    def test_run_two_status(self):
-        proc_name1 = "testcat"
-        proc_name2 = "true"
-        po = self.supd.create_program_db(command="/bin/cat", process_name=proc_name1)
-        self.supd.run_program(po)
-
-        po = self.supd.create_program_db(command="/bin/true", process_name=proc_name2)
-        self.supd.run_program(po)
-
-        rc = self.supd.get_program_status(proc_name1)
-        self.assertEqual(rc['group'], proc_name1)
-        self.assertEqual(rc['name'], proc_name1)
-
-        rc = self.supd.get_program_status(proc_name2)
-        self.assertEqual(rc['group'], proc_name2)
-        self.assertEqual(rc['name'], proc_name2)
-
-        states = self.supd.get_all_state()
-        self.assertEqual(len(states), 2)
-        # find each
-        s1 = None
-        s2 = None
-        for s in states:
-            if s['name'] == proc_name1:
-                s1 = s
-            elif s['name'] == proc_name2:
-                s2 = s
-
-        self.assertNotEqual(s1, None)
-        self.assertNotEqual(s2, None)
 
 
 

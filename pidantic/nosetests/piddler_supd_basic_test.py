@@ -73,9 +73,10 @@ class PIDSupBasicTest(unittest.TestCase):
 
     def simple_terminate_test(self):
 
+        process_name = str(uuid.uuid4()).split("-")[0]
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
+        pidantic = factory.get_pidantic(command="/bin/sleep 5000", process_name=process_name, directory=tempdir)
         pidantic.start()
         factory.poll()
         pidantic.terminate()
@@ -93,7 +94,11 @@ class PIDSupBasicTest(unittest.TestCase):
         pidantic.start()
         factory.poll()
         pidantic.terminate()
-        pidantic.terminate()
+        try:
+            pidantic.terminate()
+            self.fail("The terminate call should raise an error")
+        except:
+            pass
         while not pidantic.is_done():
             factory.poll()
         rc = pidantic.get_result_code()
