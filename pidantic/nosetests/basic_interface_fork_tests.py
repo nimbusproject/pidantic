@@ -3,8 +3,6 @@
 #from pidantic.pidantic_exceptions import PIDanticStateException
 #
 #
-#__author__ = 'bresnaha'
-#
 #import unittest
 #
 #class BasicForkInterfaceTests(unittest.TestCase):

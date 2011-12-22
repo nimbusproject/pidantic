@@ -4,8 +4,6 @@ from pidantic.supd.pidsupd import SupDPidanticFactory
 import uuid
 from pidantic.state_machine import PIDanticState
 
-__author__ = 'bresnaha'
-
 import unittest
 
 class PIDSupBasicTest(unittest.TestCase):
