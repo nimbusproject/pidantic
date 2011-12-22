@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import os
+import sys
 import uuid
 from pidantic.supd.persistance import SupDDB
 from pidantic.supd.supd import SupD
@@ -13,7 +14,8 @@ class BasicSupDTests(unittest.TestCase):
         self.dirpath = tempfile.mkdtemp()
         self.supd_db_path = "sqlite:///" + os.path.join(self.dirpath, "sup.db")
         self.supd_db = SupDDB(self.supd_db_path)
-        self.supd = SupD(self.supd_db, self.name, executable="/home/bresnaha/pycharmVE/bin/supervisord", dirpath=self.dirpath)
+        supd_path = "%s/bin/supervisord" % (sys.prefix)
+        self.supd = SupD(self.supd_db, self.name, dirpath=self.dirpath, executable=supd_path)
 
     def tearDown(self):
         self.supd.terminate()
