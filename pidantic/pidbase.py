@@ -18,6 +18,9 @@ class PIDanticStateMachineBase(PIDantic):
         PIDantic.__init__(self, event_callback=event_callback, log=log, use_channel=use_channel, channel_is_stdio=channel_is_stdio)
         self._sm = PIDanticStateMachine(self, log=log)
 
+    def set_state_change_callback(self, cb, user_arg):
+        return self._sm.set_state_change_callback(cb, user_arg)
+
     def is_done(self):
         return self._sm.is_done()
 

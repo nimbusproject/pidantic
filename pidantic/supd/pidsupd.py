@@ -119,7 +119,7 @@ class SupDPidanticFactory(PidanticFactory):
             name = state['name']
             if name not in self._watched_processes.keys():
                 self._log.log(logging.ERROR, "Supervisord is reporting an unknown process %s" % (name))
-        
+            
             pidsupd = self._watched_processes[name]
             pidsupd._process_state_change(state)
 
@@ -231,10 +231,10 @@ class PIDanticSupD(PIDanticStateMachineBase):
         state_name = supd_state['statename']
         exit_status = supd_state['exitstatus']
         event = None
-        self._log.log(logging.INFO, "%s received supd event %s" % (self._program_object.process_name, state_name))
+        self._log.log(logging.INFO, "%s (%s) received supd event %s" % (self._program_object.process_name, self._program_object.command, state_name))
 
         if state_name == "STOPPED":
-            event = "EVENT_EXITED"
+            event = "EVENT_STOPPED"
         elif state_name == "STARTING":
             # this is a restart or the first start.ignore
             pass

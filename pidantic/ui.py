@@ -107,3 +107,7 @@ class PIDantic(object):
     @not_implemented
     def has_stderr(self):
         pass
+
+    @not_implemented
+    def set_state_change_callback(self, cb, user_arg):
+        pass

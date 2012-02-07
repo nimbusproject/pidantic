@@ -20,6 +20,8 @@ class PIDanticEvents:
     EVENT_FAULT = "EVENT_FAULT"
     EVENT_STOP_REQUEST = "EVENT_STOP_REQUEST"
     EVENT_EXITED = "EVENT_EXITED"
+    # stopped can be prior to starting or after a call to stop
+    EVENT_STOPPED = "EVENT_STOPPED"
     EVENT_RESTART = "EVENT_RESTART"
     EVENT_CANCEL_REQUEST = "EVENT_CANCEL_REQUEST"
 
@@ -37,6 +39,9 @@ class PIDanticStateMachine(object):
                 state_dict[event] = None
             self._transitions[state] = state_dict
 
+        self._state_change_callback = None
+        self._state_change_user_arg = None
+
         self._last_state = None
         self._last_event = None
         self._current_state = o.sm_get_starting_state()
@@ -52,6 +57,8 @@ class PIDanticStateMachine(object):
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_start_canceled)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STARTING, o.sm_start_fault)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
+        # the next mapping jsut meanst that the process has not yet been started
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_STARTING, None)
 
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_stopping)
@@ -63,6 +70,7 @@ class PIDanticStateMachine(object):
 
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_kill)
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
+        self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING, o.sm_stopping_fault)
         # the next state just occurs because the process hasnt gotten the message yet
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_STOPPING, None)
@@ -82,6 +90,9 @@ class PIDanticStateMachine(object):
 
         self._transitions[state][event] = (function, next_state)
 
+    def set_state_change_callback(self, cb, user_arg):
+        self._state_change_callback = cb
+        self._state_change_user_arg = user_arg
 
     def event_occurred(self, event):
         ent = self._transitions[self._current_state][event]
@@ -94,6 +105,9 @@ class PIDanticStateMachine(object):
         old_state = self._current_state
         self._current_state = next_state
         self._handler_obj.sm_state_changed(self._current_state)
+
+        if old_state != self._current_state and self._state_change_callback:
+            self._state_change_callback(self._state_change_user_arg)
 
         if function:
             try:
