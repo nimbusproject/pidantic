@@ -80,6 +80,7 @@ class PIDanticStateMachine(object):
         #self.set_mapping(PIDanticState.STATE_EXITED, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_EXITED, None)
 
         self.set_mapping(PIDanticState.STATE_TERMINATED, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, None)
+        self.set_mapping(PIDanticState.STATE_TERMINATED, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_TERMINATED, None)
 
     def set_mapping(self, state, event, next_state, function):
         if state not in PIDanticStatesList:
