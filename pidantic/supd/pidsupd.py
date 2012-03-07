@@ -147,6 +147,9 @@ class PIDanticSupD(PIDanticStateMachineBase):
     def get_name(self):
         return self._program_object.process_name
 
+    def get_all_state(self):
+        return self._supd.get_all_state()
+
     def sm_get_starting_state(self):
         return self._program_object.last_known_state
 
