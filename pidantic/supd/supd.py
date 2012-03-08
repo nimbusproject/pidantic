@@ -47,6 +47,7 @@ class SupD(object):
             data_object = SupDDataObject()
             data_object.logfile = os.path.join(self._working_dir, "supd.log")
             data_object.pidfile = os.path.join(self._working_dir, "supd.pid")
+            data_object.childlogdir = self._working_dir
             data_object.unix_socket_file = os.path.join(self._working_dir, "supd.sock")
             data_object.name = name
             data_object.base_dir = dirpath
@@ -213,6 +214,7 @@ class SupD(object):
         parser.set("unix_http_server", "file", data_object.unix_socket_file)
 
         parser.set("supervisord", "logfile", data_object.logfile)
+        parser.set("supervisord", "childlogdir", data_object.childlogdir)
         parser.set("supervisord", "pidfile", data_object.pidfile)
         parser.set("supervisorctl", "serverurl", "unix://" + data_object.unix_socket_file)
 
