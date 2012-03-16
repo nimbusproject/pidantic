@@ -39,6 +39,7 @@ class SupDPidanticFactory(PidanticFactory):
 
     run_optional_keywords = [
         "log",
+        "autorestart",
     ]
 
     def __init__(self,  **kwvals):
