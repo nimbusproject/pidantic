@@ -6,12 +6,18 @@ import uuid
 from pidantic.supd.persistance import SupDDB
 from pidantic.supd.supd import SupD
 import unittest
+from platform import system
 
 class BasicSupDTests(unittest.TestCase):
 
     def setUp(self):
         self.name = "test_something-" + str(uuid.uuid4())
-        self.dirpath = tempfile.mkdtemp()
+        if system() == "Darwin":
+            # The standard mac tmp path is too long
+            # for a socket
+            self.dirpath = tempfile.mkdtemp(dir="/tmp")
+        else:
+            self.dirpath = tempfile.mkdtemp()
         self.supd_db_path = "sqlite:///" + os.path.join(self.dirpath, "sup.db")
         self.supd_db = SupDDB(self.supd_db_path)
         supd_path = "%s/bin/supervisord" % (sys.prefix)
@@ -26,7 +32,7 @@ class BasicSupDTests(unittest.TestCase):
         self.supd.ping()
 
     def test_run_program(self):
-        po = self.supd.create_program_db(command="/bin/true", process_name="test")
+        po = self.supd.create_program_db(command="true", process_name="test")
         self.supd.run_program(po)
 
     def test_get_state(self):
