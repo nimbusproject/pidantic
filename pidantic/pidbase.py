@@ -35,6 +35,10 @@ class PIDanticStateMachineBase(PIDantic):
         event = "EVENT_START_REQUEST"
         self._send_event(event)
 
+    def restart(self):
+        event = "EVENT_RESTART_REQUEST"
+        self._send_event(event)
+
     def terminate(self):
         event = "EVENT_STOP_REQUEST"
         self._send_event(event)

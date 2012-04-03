@@ -189,6 +189,11 @@ class PIDanticSupD(PIDanticStateMachineBase):
     def sm_stopped(self):
         self._log.log(logging.INFO, "%s Stopped" % (self._program_object.process_name))
 
+    def sm_restarting(self):
+        self._log.log(logging.INFO, "%s Restarting" % (self._program_object.process_name))
+        self._supd.terminate_program(self._program_object.process_name)
+
+
     def sm_stopping_fault(self):
         self._log.log(logging.INFO, "%s Stopping fault" % (self._program_object.process_name))
 

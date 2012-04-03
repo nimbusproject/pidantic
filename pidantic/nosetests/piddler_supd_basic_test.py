@@ -159,6 +159,18 @@ class PIDSupBasicTest(unittest.TestCase):
             pass
         factory.terminate()
 
+    def restart_test(self):
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/sleep 1000", process_name="sleep", directory=tempdir)
+        pidantic.start()
+
+        original_pid = pidantic._supd.get_all_state()[0]['pid']
+        pidantic.restart()
+        new_pid = pidantic._supd.get_all_state()[0]['pid']
+
+        assert new_pid != original_pid
+
         
 if __name__ == '__main__':
     unittest.main()

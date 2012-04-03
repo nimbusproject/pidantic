@@ -22,6 +22,7 @@ class PIDanticEvents:
     EVENT_EXITED = "EVENT_EXITED"
     # stopped can be prior to starting or after a call to stop
     EVENT_STOPPED = "EVENT_STOPPED"
+    EVENT_RESTART_REQUEST = "EVENT_RESTART_REQUEST"
     EVENT_RESTART = "EVENT_RESTART"
     EVENT_CANCEL_REQUEST = "EVENT_CANCEL_REQUEST"
 
@@ -59,12 +60,17 @@ class PIDanticStateMachine(object):
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
         # the next mapping jsut meanst that the process has not yet been started
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_STARTING, None)
+        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RESTART_REQUEST, PIDanticState.STATE_STOPPING_RESTART, o.sm_restarting)
 
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_stopping)
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING, o.sm_run_fault)
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, None)
 
+        self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_RESTART_REQUEST, PIDanticState.STATE_STOPPING_RESTART, o.sm_restarting)
+
+        #self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_RESTART_REQUEST, PIDanticState.STATE_STOPPING_RESTART, None)
+        self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_STARTING, o.sm_starting)
         self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_STARTING, o.sm_starting)
         self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING_RESTART, o.sm_restart_fault)
 
