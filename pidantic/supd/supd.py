@@ -97,7 +97,9 @@ class SupD(object):
     def run_program(self, program_object):
         self._supd_db.db_commit()
         self.write_conf()
-        rc = self._reread()
+        self._reread()
+        sup = self._proxy.supervisor
+        rc = sup.startProcessGroup(program_object.process_name)
         return rc
 
     def getState(self):

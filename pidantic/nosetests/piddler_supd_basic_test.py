@@ -160,15 +160,24 @@ class PIDSupBasicTest(unittest.TestCase):
         factory.terminate()
 
     def restart_test(self):
+        from time import sleep
         tempdir = tempfile.mkdtemp()
         factory = SupDPidanticFactory(directory=tempdir, name="tester")
-        pidantic = factory.get_pidantic(command="/bin/sleep 1000", process_name="sleep", directory=tempdir)
+        pidantic = factory.get_pidantic(command="/bin/cat", process_name="cat", directory=tempdir)
         pidantic.start()
+        while not pidantic.get_state() == PIDanticState.STATE_RUNNING:
+            factory.poll()
+            sleep(1)
 
         original_pid = pidantic._supd.get_all_state()[0]['pid']
         pidantic.restart()
+        while not pidantic.get_state() == PIDanticState.STATE_RUNNING:
+            factory.poll()
+            sleep(1)
+
         new_pid = pidantic._supd.get_all_state()[0]['pid']
 
+        assert int(new_pid) != 0
         assert new_pid != original_pid
 
         

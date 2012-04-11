@@ -31,10 +31,6 @@ class BasicSupDTests(unittest.TestCase):
     def test_ping(self):
         self.supd.ping()
 
-    def test_run_program(self):
-        po = self.supd.create_program_db(command="true", process_name="test")
-        self.supd.run_program(po)
-
     def test_get_state(self):
         state = self.supd.getState()
         self.assertEqual(state['statename'], "RUNNING")
