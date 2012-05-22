@@ -4,6 +4,7 @@ import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException
 from pidantic.ui import PIDantic
 
+
 def _set_param_or_default(kwvals, key, default=None):
     try:
         rc = kwvals[key]
@@ -50,30 +51,23 @@ class PIDanticStateMachineBase(PIDantic):
     def started(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
-
     def start_canceled(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
-
 
     def start_fault(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
-
     def exited(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
-
 
     def stopping(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
-
     def run_fault(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
 
-
     def stopped(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))
-
 
     def stop_fault(self):
         raise PIDanticUsageException("function %s must be implemented" % (inspect.stack()[1][3]))

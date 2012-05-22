@@ -120,7 +120,7 @@ class SupDPidanticFactory(PidanticFactory):
             name = state['name']
             if name not in self._watched_processes.keys():
                 self._log.log(logging.ERROR, "Supervisord is reporting an unknown process %s" % (name))
-            
+
             pidsupd = self._watched_processes[name]
             pidsupd._process_state_change(state)
 
@@ -173,7 +173,7 @@ class PIDanticSupD(PIDanticStateMachineBase):
 
     def sm_start_fault(self):
         self._log.log(logging.INFO, "%s Start fault" % (self._program_object.process_name))
-    
+
     def sm_exited(self):
         self._log.log(logging.INFO, "%s Exited" % (self._program_object.process_name))
 
@@ -273,4 +273,4 @@ class PIDanticSupD(PIDanticStateMachineBase):
 
     def cleanup(self):
         self._supd.remove_program(self._program_object.process_name)
-        
+

@@ -20,11 +20,11 @@ def get_all_supds(supd_db, log=logging):
         supd_list.append(supd)
     return supd_list
 
+
 class SupD(object):
 
     cols = ['command', 'process_name', 'numprocs', 'directory', 'umask', 'priority', 'autostart',
            'autorestart', 'startsecs', 'startretries', 'redirect_stderr', 'startretries', 'startretries']
-
 
     def __init__(self, supd_db, name=None, template=None, executable=None, data_object=None, dirpath=None, log=logging):
         if executable is None and data_object is None:
@@ -43,7 +43,7 @@ class SupD(object):
                 os.makedirs(self._working_dir)
             except Exception, ex:
                 self._log.log(logging.WARN, "The directory %s already exists" % (self._working_dir))
-            
+
             data_object = SupDDataObject()
             data_object.logfile = os.path.join(self._working_dir, "supd.log")
             data_object.pidfile = os.path.join(self._working_dir, "supd.pid")
@@ -138,7 +138,7 @@ class SupD(object):
             self._add_process(sup, n)
         for n in added:
             self._add_process(sup, n)
-        
+
         return rc
 
     def terminate_program(self, name):
@@ -193,7 +193,6 @@ class SupD(object):
 
         return conffile
 
-
     def _write_conf_fd(self, data_object, conffile_fd):
 
         parser = ConfigParser.ConfigParser()
@@ -203,10 +202,10 @@ class SupD(object):
 
         # add the sections if they do not exist
         sections = {
-            "unix_http_server" : [],
-            "supervisord" : [],
-            "rpcinterface:supervisor" : [],
-            "supervisorctl" : []}
+            "unix_http_server": [],
+            "supervisord": [],
+            "rpcinterface:supervisor": [],
+            "supervisorctl": []}
         for s in sections.keys():
             try:
                 parser.add_section(s)
@@ -255,7 +254,6 @@ class SupD(object):
         sup = self._proxy.supervisor
         state = sup.getAllProcessInfo()
         return state
-
 
     def get_name(self):
         data_object = self._data_object
