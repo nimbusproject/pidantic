@@ -1,8 +1,6 @@
 #!/usr/bin/env pythonv
 import os
 
-
-
 try:
     from setuptools import setup
 except ImportError:
@@ -23,11 +21,11 @@ setup(name='pidantic',
       author_email='workspace-user@globus.org',
       url='http://www.nimbusproject.org/',
       dependency_links=['http://ooici.net/releases'],
-      packages=[ 'pidantic',  'pidantic.fork', 'pidantic.supd'],
-      keywords = "OOI PID process fork supervisord ION",
+      packages=['pidantic', 'pidantic.fork', 'pidantic.supd', 'pidantic.pyon'],
+      keywords="OOI PID process fork supervisord ION",
       long_description="""Some other time""",
       license="Apache2",
-      install_requires = ['supervisor', 'sqlalchemy==0.7.6', 'gevent'],
+      install_requires=['supervisor', 'sqlalchemy==0.7.6', 'gevent'],
 
       classifiers=[
           'Development Status :: 4 - Beta',
