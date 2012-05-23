@@ -81,22 +81,24 @@ class PyonPidanticFactory(PidanticFactory):
 
         return pidpyon
 
+    def reload_instances(self):
+        self._watched_processes = {}
+        data_obj = self._pyon.get_data_object()
+        for p in data_obj.processes:
+            pidpyon = PIDanticPyon(p, self._pyon, log=self._log)
+            self._watched_processes[p.process_name] = pidpyon
+        self.poll()
+
+        return self._watched_processes
+
     def poll(self):
 
-        all_procs = dict(self.container.proc_manager.procs)
-        proc_map = self._get_proc_name_to_pyon_id_map()
+        all_procs = self.container.proc_manager.procs
 
-        for pyon_process_id, local_id in proc_map.iteritems():
+        for name, pidsupd in self._watched_processes.iteritems():
 
-            pidsupd = self._watched_processes[local_id]
-            state = all_procs.get(pyon_process_id)
+            state = all_procs.get(pidsupd._program_object.pyon_process_id)
             pidsupd._process_state_change(state)
-
-    def _get_proc_name_to_pyon_id_map(self):
-        pid_map = {}
-        for name, pid in self._watched_processes.iteritems():
-            pid_map[pid._program_object.pyon_process_id] = name
-        return pid_map
 
     def terminate(self):
         self._pyon.terminate()
