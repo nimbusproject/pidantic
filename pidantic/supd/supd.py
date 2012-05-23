@@ -8,7 +8,7 @@ import logging
 import fcntl
 import os
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
-from pidantic.supd.persistance import SupDDataObject, SupDProgramDataObject
+from pidantic.supd.persistence import SupDDataObject, SupDProgramDataObject
 
 
 def get_all_supds(supd_db, log=logging):

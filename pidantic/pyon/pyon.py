@@ -2,7 +2,7 @@ import os
 import logging
 
 from eeagent.util import unmake_id
-from pidantic.pyon.persistance import PyonDataObject, PyonProcDataObject
+from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException
 
 

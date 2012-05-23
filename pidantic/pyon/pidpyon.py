@@ -5,7 +5,7 @@ from pidantic.pyon.pyon import Pyon
 from pidantic.ui import PidanticFactory
 from pidantic.pidbase import PIDanticStateMachineBase
 from pidantic.pidantic_exceptions import PIDanticUsageException  # , PIDanticExecutionException
-from pidantic.pyon.persistance import PyonDB
+from pidantic.pyon.persistence import PyonDB
 
 
 class PyonPidanticFactory(PidanticFactory):

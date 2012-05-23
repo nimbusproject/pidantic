@@ -3,7 +3,7 @@ import datetime
 from pidantic.pidbase import PIDanticStateMachineBase
 import os
 from pidantic.pidantic_exceptions import PIDanticUsageException
-from pidantic.supd.persistance import SupDDB
+from pidantic.supd.persistence import SupDDB
 from pidantic.supd.supd import SupD
 from pidantic.ui import PidanticFactory
 import sys

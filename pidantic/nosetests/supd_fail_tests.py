@@ -3,7 +3,7 @@ import tempfile
 import os
 import uuid
 from pidantic.pidantic_exceptions import PIDanticExecutionException
-from pidantic.supd.persistance import SupDDB
+from pidantic.supd.persistence import SupDDB
 from pidantic.supd.supd import SupD
 import unittest
 

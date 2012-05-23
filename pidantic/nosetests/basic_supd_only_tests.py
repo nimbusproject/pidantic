@@ -3,7 +3,7 @@ import tempfile
 import os
 import sys
 import uuid
-from pidantic.supd.persistance import SupDDB
+from pidantic.supd.persistence import SupDDB
 from pidantic.supd.supd import SupD
 import unittest
 from platform import system
