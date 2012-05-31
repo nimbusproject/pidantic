@@ -1,5 +1,6 @@
 import os
 import logging
+import yaml
 
 from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
@@ -8,7 +9,7 @@ from pidantic.pidantic_exceptions import PIDanticUsageException
 
 class Pyon(object):
 
-    cols = ['directory', 'pyon_name', 'module', 'cls', 'process_name',
+    cols = ['directory', 'pyon_name', 'module', 'cls', 'process_name', 'config',
     ]
 
     def __init__(self, pyon_db, pyon_container=None, proc=None, name=None,
@@ -69,9 +70,14 @@ class Pyon(object):
 
     def run_process(self, process_object):
 
+        try:
+            config = yaml.load(process_object.config)
+        except AttributeError:
+            config = None
+
         pyon_id = self._container.spawn_process(name=process_object.pyon_name,
                 module=process_object.module, cls=process_object.cls,
-                config=process_object.config)
+                config=config)
         process_object.pyon_process_id = pyon_id
         self._pyon_db.db_commit()
         return pyon_id

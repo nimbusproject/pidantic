@@ -27,6 +27,7 @@ class PyonPidanticFactory(PidanticFactory):
         "pyon_name",
         "module",
         "cls",
+        "config",
     ]
 
     run_optional_keywords = [
