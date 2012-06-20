@@ -1,6 +1,7 @@
 import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticStateException
 
+
 class PIDanticState:
     STATE_PENDING = "STATE_PENDING"
     STATE_REQUEST_CANCELED = "STATE_REQUEST_CANCELED"
@@ -12,6 +13,7 @@ class PIDanticState:
     STATE_TERMINATED = "STATE_TERMINATED"
 
 PIDanticStatesList = [d for d in dir(PIDanticState) if d.find("STATE_") == 0]
+
 
 class PIDanticEvents:
     EVENT_INITIALIZED = "EVENT_START_INITIALIZED"
@@ -123,7 +125,8 @@ class PIDanticStateMachine(object):
                 self._log.log(logging.ERROR, "An exception occurred calling %s on %s due to %s in state %s || %s" % (str(function), str(object), event, old_state, str(ex)))
                 raise
 
-        self._log.log(logging.INFO, "Moved from state %s to state %s because of event %s" % (old_state, next_state, event))
+        if old_state != self._current_state:
+            self._log.log(logging.DEBUG, "Moved from state %s to state %s because of event %s" % (old_state, next_state, event))
 
     def is_done(self):
         return self._current_state in [PIDanticState.STATE_EXITED, PIDanticState.STATE_TERMINATED, PIDanticState.STATE_REQUEST_CANCELED]
