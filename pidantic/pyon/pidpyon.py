@@ -32,6 +32,7 @@ class PyonPidanticFactory(PidanticFactory):
 
     run_optional_keywords = [
         "log",
+        "module_uri",
     ]
 
     _watched_processes = {}

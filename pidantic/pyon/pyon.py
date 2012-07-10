@@ -2,20 +2,24 @@ import os
 import logging
 import yaml
 
+from imp import load_source
+from urllib import urlretrieve
+from uuid import uuid4
+
 from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
-from pidantic.pidantic_exceptions import PIDanticUsageException
+from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 
 
 class Pyon(object):
 
-    cols = ['directory', 'pyon_name', 'module', 'cls', 'process_name', 'config',
+    cols = ['directory', 'pyon_name', 'module', 'module_uri', 'cls', 'process_name', 'config',
     ]
 
     def __init__(self, pyon_db, pyon_container=None, proc=None, name=None,
             data_object=None, dirpath=None, log=logging):
         if data_object is None and name is None:
-            raise PIDanticUsageException("You specify a socket")
+            raise PIDanticUsageException("You must specify a socket")
 
         self._log = log
         self._pyon_db = pyon_db
@@ -75,12 +79,48 @@ class Pyon(object):
         except AttributeError:
             config = None
 
+        if process_object.module_uri is not None:
+            module_file = self.download_module(process_object.module_uri)
+            module = self.load_module(module_file, process_object.module)
+            process_object.module = module
+            self._pyon_db.db_commit()
+
         pyon_id = self._container.spawn_process(name=process_object.pyon_name,
                 module=process_object.module, cls=process_object.cls,
                 config=config)
         process_object.pyon_process_id = pyon_id
         self._pyon_db.db_commit()
         return pyon_id
+
+    def download_module(self, module_uri):
+        try:
+            module_file, _ = urlretrieve(module_uri)
+        except:
+            msg = "Unable to download code module %s" % module_uri
+            self._log.exception(msg)
+            raise PIDanticExecutionException(msg)
+        return module_file
+
+    def load_module(self, module_file, module):
+        module_name = self._unique_module_name(module)
+        try:
+            load_source(module_name, module_file)
+        except:
+            #TODO throw right exception
+            msg = "Unable to load code module %s" % module
+            self._log.exception(msg)
+            raise PIDanticExecutionException(msg)
+
+        return module_name
+
+    def _unique_module_name(self, module=None):
+
+        unique = uuid4().hex
+        if module:
+            unique = ".".join([unique, module])
+            unique = unique.replace(".", "_")
+
+        return unique
 
     def getState(self):
         return self._container._is_started
@@ -106,10 +146,10 @@ class Pyon(object):
         return pyon_id
 
     def remove_process(self, name):
-        program_object = None
+        process_object = None
         data_object = self._data_object
-        for p in data_object.programs:
-            if p.process_name == name:
+        for p in data_object.processes:
+            if p.pyon_name == name:
                 process_object = p
                 break
         if not process_object:
@@ -118,8 +158,7 @@ class Pyon(object):
 
         data_object.processes.remove(process_object)
         self._pyon_db.db_obj_delete(process_object)
-        self._supd_db.db_commit()
-        return rc
+        return
 
     def terminate(self):
         # TODO: How should terminate work in Pyon mode
