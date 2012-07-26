@@ -233,14 +233,12 @@ class PIDanticSupD(PIDanticStateMachineBase):
     def has_stderr(self):
         pass
 
-
     def _process_state_change(self, supd_state):
 
         # restart stuff will make this wacky
         state_name = supd_state['statename']
         exit_status = supd_state['exitstatus']
         event = None
-        self._log.log(logging.INFO, "%s (%s) received supd event %s" % (self._program_object.process_name, self._program_object.command, state_name))
 
         if state_name == "STOPPED":
             event = "EVENT_STOPPED"
