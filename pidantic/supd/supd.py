@@ -24,7 +24,8 @@ def get_all_supds(supd_db, log=logging):
 class SupD(object):
 
     cols = ['command', 'process_name', 'numprocs', 'directory', 'umask', 'priority', 'autostart',
-           'autorestart', 'startsecs', 'startretries', 'redirect_stderr', 'startretries', 'startretries']
+           'autorestart', 'startsecs', 'startretries', 'redirect_stderr', 'startretries', 'startretries',
+           'stopwaitsecs']
 
     def __init__(self, supd_db, name=None, template=None, executable=None, data_object=None, dirpath=None, log=logging):
         if executable is None and data_object is None:

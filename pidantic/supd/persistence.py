@@ -42,13 +42,13 @@ program_table = Table('program', metadata,
     Column('autorestart', String(16), default="false"),
     Column('startsecs', Integer, default=0),
     Column('startretries', Integer, default=3),
+    Column('stopwaitsecs', Integer, default=180),
     Column('exitcodes', String(32), default="0"),
     Column('last_known_state', String(64), default=PIDanticState.STATE_PENDING),  # 0: registered, 1: submitted, 2: error
 
 
 
 #;stopsignal=QUIT               ; signal used to kill process (default TERM)
-#;stopwaitsecs=10               ; max num secs to wait b4 SIGKILL (default 10)
 #;user=chrism                   ; setuid to this UNIX account to run the program
 
     Column('redirect_stderr', Boolean, default=False),
