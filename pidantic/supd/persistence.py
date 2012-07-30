@@ -52,8 +52,6 @@ program_table = Table('program', metadata,
 #;user=chrism                   ; setuid to this UNIX account to run the program
 
     Column('redirect_stderr', Boolean, default=False),
-    Column('startretries', Integer, default=3),
-    Column('startretries', Integer, default=3),
 
 #;stdout_logfile=/a/path        ; stdout log path, NONE for none; default AUTO
 #stdout_logfile_maxbytes=1MB   ; max # logfile bytes b4 rotation (default 50MB)
@@ -70,10 +68,10 @@ program_table = Table('program', metadata,
     )
 
 
-
 class SupDDataObject(object):
     def __init__(self):
         self.programs = []
+
 
 class SupDProgramDataObject(object):
 
@@ -90,14 +88,14 @@ class SupDDB(object):
     def __init__(self, dburl, module=None):
 
         if module is None:
-            self._engine = sqlalchemy.create_engine(dburl, connect_args={'check_same_thread':False})
+            self._engine = sqlalchemy.create_engine(dburl, connect_args={'check_same_thread': False})
         else:
-            self._engine = sqlalchemy.create_engine(dburl, module=module, connect_args={'check_same_thread':False})
+            self._engine = sqlalchemy.create_engine(dburl, module=module, connect_args={'check_same_thread': False})
         metadata.create_all(self._engine)
         #self._Session = scoped_session(sessionmaker(bind=self._engine))
         self._SessionX = sessionmaker(bind=self._engine)
         self._Session = self._SessionX()
-        
+
     def close(self):
         self._Session.close()
 

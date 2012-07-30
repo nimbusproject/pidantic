@@ -42,7 +42,7 @@ class SupDPidanticFactory(PidanticFactory):
         "autorestart",
     ]
 
-    def __init__(self,  **kwvals):
+    def __init__(self, **kwvals):
         for p in self.init_needed_keywords:
             if p not in kwvals.keys():
                 raise PIDanticUsageException("The driver %s must have the parameter %s." % (self.driver_name, p))
