@@ -220,6 +220,8 @@ class PIDanticPyon(PIDanticStateMachineBase):
             event = "EVENT_EXITED"
         elif pyon_proc and pyon_proc.running:
             event = "EVENT_RUNNING"
+        else:
+            self._log.log(logging.WARNING, "%s (%s) has an unknown state. Process isn't running?" % (self._program_object.process_name, self._program_object.command))
 
         #if state_name == "STOPPED":
             #event = "EVENT_STOPPED"
