@@ -218,6 +218,7 @@ class PIDanticPyon(PIDanticStateMachineBase):
         if not pyon_proc:
             # Process is missing, so exited
             event = "EVENT_EXITED"
+            self._exit_code = 0
         elif pyon_proc and pyon_proc.running:
             event = "EVENT_RUNNING"
         else:
