@@ -1,6 +1,7 @@
 import os
-import logging
 import yaml
+import logging
+import threading
 
 from imp import load_source
 from urllib import urlretrieve
@@ -11,18 +12,30 @@ from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 
 
+def proc_manager_lock(func):
+    def call(self, *args, **kwargs):
+
+        with self._proc_manager_lock:
+            return func(self, *args, **kwargs)
+    return call
+
+
 class Pyon(object):
 
-    cols = ['directory', 'pyon_name', 'module', 'module_uri', 'cls', 'process_name', 'config',
-    ]
+    cols = ['directory', 'pyon_name', 'module', 'module_uri', 'cls', 'process_name', 'config', ]
 
     def __init__(self, pyon_db, pyon_container=None, proc=None, name=None,
             data_object=None, dirpath=None, log=logging):
         if data_object is None and name is None:
-            raise PIDanticUsageException("You must specify a socket")
+            raise PIDanticUsageException("You must specify a data_object or name")
+
+        if pyon_container is None:
+            raise PIDanticUsageException("You must supply a Pyon container")
 
         self._log = log
         self._pyon_db = pyon_db
+        self._container = pyon_container
+        self._proc_manager_lock = threading.RLock()
         if data_object:
             self._data_object = data_object
         else:
@@ -42,8 +55,7 @@ class Pyon(object):
             self._pyon_db.db_commit()
             self._data_object = data_object
 
-        self._container = pyon_container
-
+    @proc_manager_lock
     def get_process_status(self, name):
         # TODO: this will probably change once pyon migrates away from fail
         # fast
@@ -72,6 +84,7 @@ class Pyon(object):
 
         return process_object
 
+    @proc_manager_lock
     def run_process(self, process_object):
 
         try:
@@ -125,6 +138,7 @@ class Pyon(object):
     def getState(self):
         return self._container._is_started
 
+    @proc_manager_lock
     def terminate_process(self, name):
 
         pyon_id = self._get_pyon_process_id(name)
