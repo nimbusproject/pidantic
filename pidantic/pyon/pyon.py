@@ -56,6 +56,10 @@ class Pyon(object):
             self._data_object = data_object
 
     @proc_manager_lock
+    def get_all_procs(self):
+        return self._container.proc_manager.procs
+
+    @proc_manager_lock
     def get_process_status(self, name):
         # TODO: this will probably change once pyon migrates away from fail
         # fast

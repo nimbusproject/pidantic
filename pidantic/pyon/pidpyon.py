@@ -95,7 +95,7 @@ class PyonPidanticFactory(PidanticFactory):
 
     def poll(self):
 
-        all_procs = self.container.proc_manager.procs
+        all_procs = self._pyon.get_all_procs()
 
         for name, pidsupd in self._watched_processes.iteritems():
 
