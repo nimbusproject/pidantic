@@ -89,18 +89,27 @@ class PyonPidanticFactory(PidanticFactory):
         for p in data_obj.processes:
             pidpyon = PIDanticPyon(p, self._pyon, log=self._log)
             self._watched_processes[p.process_name] = pidpyon
-        self.poll()
+        self._mark_all_failed()
 
         return self._watched_processes
+
+    def _mark_all_failed(self):
+        all_procs = self._pyon.get_all_procs()
+
+        for name, pidpyon in self._watched_processes.iteritems():
+
+            state = all_procs.get(pidpyon._program_object.pyon_process_id)
+            pidpyon._exit_code = 100
+            pidpyon._process_state_change(state)
 
     def poll(self):
 
         all_procs = self._pyon.get_all_procs()
 
-        for name, pidsupd in self._watched_processes.iteritems():
+        for name, pidpyon in self._watched_processes.iteritems():
 
-            state = all_procs.get(pidsupd._program_object.pyon_process_id)
-            pidsupd._process_state_change(state)
+            state = all_procs.get(pidpyon._program_object.pyon_process_id)
+            pidpyon._process_state_change(state)
 
     def terminate(self):
         self._pyon.terminate()
@@ -214,8 +223,10 @@ class PIDanticPyon(PIDanticStateMachineBase):
 
         event = None
         #self._log.log(logging.INFO, "%s (%s) received pyon event %s" % (self._program_object.process_name, self._program_object.command, state_name))
-
-        if not pyon_proc:
+        if not pyon_proc and self._exit_code:
+            event = "EVENT_EXITED"
+            # Keep existing non-zero exit code
+        elif not pyon_proc:
             # Process is missing, so exited
             event = "EVENT_EXITED"
             self._exit_code = 0
