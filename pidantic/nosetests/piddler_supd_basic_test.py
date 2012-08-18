@@ -180,6 +180,28 @@ class PIDSupBasicTest(unittest.TestCase):
         assert int(new_pid) != 0
         assert new_pid != original_pid
 
+    def state_change_callback_test(self):
+        global cb_called
+        cb_called = False
+
+        def my_callback(arg):
+            print "callback"
+            global cb_called
+            cb_called = True
+        
+
+        tempdir = tempfile.mkdtemp()
+        factory = SupDPidanticFactory(directory=tempdir, name="tester")
+        pidantic = factory.get_pidantic(command="/bin/sleep 1", process_name="sleep", directory=tempdir)
+        pidantic.set_state_change_callback(my_callback, None)
+        pidantic.start()
+        state = pidantic.get_state()
+        while not pidantic.is_done():
+            factory.poll()
+        factory.terminate()
+
+        assert cb_called
+
         
 if __name__ == '__main__':
     unittest.main()
