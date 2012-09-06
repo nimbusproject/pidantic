@@ -6,6 +6,7 @@ import ConfigParser
 import StringIO
 import logging
 import fcntl
+import sys
 import os
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 from pidantic.supd.persistence import SupDDataObject, SupDProgramDataObject
@@ -127,7 +128,7 @@ class SupD(object):
     def _reread(self):
         sup = self._proxy.supervisor
         try:
-            rc = sup.reloadConfig()
+            rc = retry_supd_ten_times(sup.reloadConfig)
         except xmlrpclib.Fault, e:
             raise
         (added, changed, removed) = rc[0]
@@ -263,6 +264,16 @@ class SupD(object):
     def get_error_message(self):
         return ""
 
+def retry_supd_ten_times(fn, *args, **kwargs):
+    exc = None
+    for i in range(0, 10):
+        try:
+            return fn(*args, **kwargs)
+        except xmlrpclib.ProtocolError, e:
+            exc = e
+            print >> sys.stderr, e
+    else:
+        raise exc
 
 def _run_log(cmd, log):
     #p = Popen(cmd, shell=True)
