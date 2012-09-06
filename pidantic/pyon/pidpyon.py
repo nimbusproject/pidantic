@@ -144,7 +144,7 @@ class PIDanticPyon(PIDanticStateMachineBase):
         self._pyon._pyon_db.db_commit()
 
     def sm_starting(self):
-        self._log.info("%s Starting" % (self._program_object.pyon_name))
+        self._log.info("%s Starting" % (self._program_object.process_name))
         self._pyon.run_process(self._program_object)
 
     def sm_request_canceled(self):
@@ -156,35 +156,35 @@ class PIDanticPyon(PIDanticStateMachineBase):
             self._program_object.pyon_name))
 
     def sm_start_canceled(self):
-        self._pyon.terminate_process(self._program_object.pyon_name)
+        self._pyon.terminate_process(self._program_object.process_name)
 
     def sm_start_fault(self):
-        self._log.info("%s Start fault" % (self._program_object.pyon_name))
+        self._log.info("%s Start fault" % (self._program_object.process_name))
 
     def sm_exited(self):
-        self._log.log(logging.INFO, "%s Exited" % (self._program_object.pyon_name))
+        self._log.log(logging.INFO, "%s Exited" % (self._program_object.process_name))
 
     def sm_stopping(self):
-        self._pyon.terminate_process(self._program_object.pyon_name)
+        self._pyon.terminate_process(self._program_object.process_name)
 
     def sm_kill(self):
-        self._pyon.terminate_process(self._program_object.pyon_name)
+        self._pyon.terminate_process(self._program_object.process_name)
 
     def sm_run_fault(self):
-        self._log.info("%s run fault" % (self._program_object.pyon_name))
+        self._log.info("%s run fault" % (self._program_object.process_name))
 
     def sm_stopped(self):
-        self._log.info("%s Stopped" % (self._program_object.pyon_name))
+        self._log.info("%s Stopped" % (self._program_object.process_name))
 
     def sm_restarting(self):
-        self._log.log(logging.INFO, "%s Restarting" % (self._program_object.pyon_name))
-        self._pyon.terminate_program(self._program_object.pyon_name)
+        self._log.log(logging.INFO, "%s Restarting" % (self._program_object.process_name))
+        self._pyon.terminate_program(self._program_object.process_name)
 
     def sm_stopping_fault(self):
-        self._log.log(logging.INFO, "%s Stopping fault" % (self._program_object.pyon_name))
+        self._log.log(logging.INFO, "%s Stopping fault" % (self._program_object.process_name))
 
     def sm_restart_fault(self):
-        self._log.log(logging.INFO, "%s Re-Starting fault" % (self._program_object.pyon_name))
+        self._log.log(logging.INFO, "%s Re-Starting fault" % (self._program_object.process_name))
 
     def get_result_code(self):
         return self._exit_code

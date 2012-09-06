@@ -123,7 +123,6 @@ class Pyon(object):
         try:
             load_source(module_name, module_file)
         except:
-            #TODO throw right exception
             msg = "Unable to load code module %s" % module
             self._log.exception(msg)
             raise PIDanticExecutionException(msg)
@@ -144,16 +143,16 @@ class Pyon(object):
 
     @proc_manager_lock
     def terminate_process(self, name):
-
         pyon_id = self._get_pyon_process_id(name)
         terminate_result = self._container.terminate_process(pyon_id)
+
         return terminate_result
 
     def _get_pyon_process_id(self, name):
         process_object = None
         data_object = self._data_object
         for p in data_object.processes:
-            if p.pyon_name == name:
+            if p.process_name == name:
                 process_object = p
                 break
         if not process_object:
