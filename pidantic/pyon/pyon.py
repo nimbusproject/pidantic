@@ -102,12 +102,16 @@ class Pyon(object):
             process_object.module = module
             self._pyon_db.db_commit()
 
-        pyon_id = self._container.spawn_process(name=process_object.pyon_name,
-                module=process_object.module, cls=process_object.cls,
-                config=config)
-        process_object.pyon_process_id = pyon_id
-        self._pyon_db.db_commit()
-        return pyon_id
+        try:
+            pyon_id = self._container.spawn_process(name=process_object.pyon_name,
+                    module=process_object.module, cls=process_object.cls,
+                    config=config)
+            process_object.pyon_process_id = pyon_id
+            self._pyon_db.db_commit()
+            return pyon_id
+        except:
+            self._log.exception("Problem starting pyon process %s" % process_object.pyon_name)
+            return None
 
     def download_module(self, module_uri):
         try:
