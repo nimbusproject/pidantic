@@ -152,7 +152,7 @@ class Pyon(object):
 
         return terminate_result
 
-    def _get_pyon_process_id(self, name):
+    def _get_pyon_process_object(self, name):
         process_object = None
         data_object = self._data_object
         for p in data_object.processes:
@@ -163,21 +163,16 @@ class Pyon(object):
             msg = "%s is not a known process name" % (name)
             raise PIDanticUsageException(msg)
 
+        return process_object
+
+    def _get_pyon_process_id(self, name):
+        process_object = self._get_pyon_process_object(name)
         pyon_id = process_object.pyon_process_id
         return pyon_id
 
     def remove_process(self, name):
-        process_object = None
-        data_object = self._data_object
-        for p in data_object.processes:
-            if p.pyon_name == name:
-                process_object = p
-                break
-        if not process_object:
-            msg = "%s is not a known process name" % (name)
-            raise PIDanticUsageException(msg)
-
-        data_object.processes.remove(process_object)
+        process_object = self._get_pyon_process_object(name)
+        self._data_object.processes.remove(process_object)
         self._pyon_db.db_obj_delete(process_object)
         return
 
