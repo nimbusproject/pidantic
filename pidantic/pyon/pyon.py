@@ -12,6 +12,7 @@ from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 
+SPAWN_REQUEST = "spawn_request"
 
 
 def proc_manager_lock(func):
@@ -93,8 +94,17 @@ class Pyon(object):
     @proc_manager_lock
     def run_process(self, process_object, async=True):
 
+        if process_object.module_uri is not None:
+            module_file = self.download_module(process_object.module_uri)
+            module = self.load_module(module_file, process_object.module)
+            process_object.module = module
+            self._pyon_db.db_commit()
+
         if async:
             spawn(self._run_process, process_object)
+            process_object.pyon_process_id = SPAWN_REQUEST
+            self._pyon_db.db_commit()
+            return SPAWN_REQUEST
         else:
             return self._run_process(process_object)
 
@@ -103,12 +113,6 @@ class Pyon(object):
             config = yaml.load(process_object.config)
         except AttributeError:
             config = None
-
-        if process_object.module_uri is not None:
-            module_file = self.download_module(process_object.module_uri)
-            module = self.load_module(module_file, process_object.module)
-            process_object.module = module
-            self._pyon_db.db_commit()
 
         try:
             pyon_id = self._container.spawn_process(name=process_object.pyon_name,
