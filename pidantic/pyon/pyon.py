@@ -6,12 +6,10 @@ import threading
 from imp import load_source
 from urllib import urlretrieve
 from uuid import uuid4
-from gevent import spawn
 
 from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
-
 
 
 def proc_manager_lock(func):
@@ -91,14 +89,8 @@ class Pyon(object):
         return process_object
 
     @proc_manager_lock
-    def run_process(self, process_object, async=True):
+    def run_process(self, process_object):
 
-        if async:
-            spawn(self._run_process, process_object)
-        else:
-            return self._run_process(process_object)
-
-    def _run_process(self, process_object):
         try:
             config = yaml.load(process_object.config)
         except AttributeError:
