@@ -63,7 +63,6 @@ class PIDanticStateMachine(object):
         # the next mapping just meanst that the process has not yet been started
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_STARTING, None)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RESTART_REQUEST, PIDanticState.STATE_STOPPING_RESTART, o.sm_restarting)
-        self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, None)
 
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
         self.set_mapping(PIDanticState.STATE_RUNNING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)

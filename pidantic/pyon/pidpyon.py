@@ -1,18 +1,11 @@
 import logging
 
-from pidantic.pyon.pyon import Pyon, SPAWN_REQUEST
+from pidantic.pyon.pyon import Pyon
 
 from pidantic.ui import PidanticFactory
 from pidantic.pidbase import PIDanticStateMachineBase
 from pidantic.pidantic_exceptions import PIDanticUsageException  # , PIDanticExecutionException
 from pidantic.pyon.persistence import PyonDB
-
-try:
-    from interface.objects import ProcessStateEnum
-except ImportError:
-    # Note: this will never happen in a case where this module is
-    # actually used. Only in tests.
-    ProcessStateEnum = object
 
 
 class PyonPidanticFactory(PidanticFactory):
@@ -112,13 +105,11 @@ class PyonPidanticFactory(PidanticFactory):
     def poll(self):
 
         all_procs = self._pyon.get_all_procs()
+
         for name, pidpyon in self._watched_processes.iteritems():
 
-            if pidpyon._program_object.pyon_process_id == SPAWN_REQUEST:
-                pidpyon._process_state_change(SPAWN_REQUEST)
-            else:
-                pyon_process = all_procs.get(pidpyon._program_object.pyon_process_id)
-                pidpyon._process_state_change(pyon_process)
+            state = all_procs.get(pidpyon._program_object.pyon_process_id)
+            pidpyon._process_state_change(state)
 
     def terminate(self):
         self._pyon.terminate()
@@ -135,11 +126,6 @@ class PIDanticPyon(PIDanticStateMachineBase):
         self._run_once = False
         PIDanticStateMachineBase.__init__(self, log=log,
                 use_channel=use_channel, channel_is_stdio=channel_is_stdio)
-
-        # TODO: PDA: am I adding a ton of callbacks here?
-        self._pyon._container.proc_manager.add_proc_state_changed_callback(self._pyon_process_state_change_callback)
-        print "PDA: %s" % self._pyon._container.proc_manager._proc_state_change_callbacks
-
 
     def get_error_message(self):
         return str(self._exception)
@@ -233,27 +219,10 @@ class PIDanticPyon(PIDanticStateMachineBase):
     def has_stderr(self):
         pass
 
-    def _pyon_process_state_change_callback(self, process, state, container):
-
-        if self._program_object.pyon_process_id != process.id:
-            return
-
-        event = None
-        if state == ProcessStateEnum.ERROR:
-            event = "EVENT_EXITED"
-            self._exit_code = 100
-        elif state == ProcessStateEnum.TERMINATE:
-            event = "EVENT_EXITED"
-            self._exit_code = 0
-        else:
-            self._log.log(logging.WARNING, "%s (%s) has an unknown state. Process isn't running?" % (self._program_object.process_name, self._program_object.command))
-
-        if event:
-            self._send_event(event)
-
     def _process_state_change(self, pyon_proc):
 
         event = None
+        #self._log.log(logging.INFO, "%s (%s) received pyon event %s" % (self._program_object.process_name, self._program_object.command, state_name))
         if not pyon_proc and self._exit_code:
             event = "EVENT_EXITED"
             # Keep existing non-zero exit code
@@ -261,20 +230,40 @@ class PIDanticPyon(PIDanticStateMachineBase):
             # Process is missing, so exited
             event = "EVENT_EXITED"
             self._exit_code = 0
-        elif pyon_proc and pyon_proc == SPAWN_REQUEST:
-            event = "EVENT_START_REQUEST"
         elif pyon_proc and pyon_proc.running:
             event = "EVENT_RUNNING"
         else:
             self._log.log(logging.WARNING, "%s (%s) has an unknown state. Process isn't running?" % (self._program_object.process_name, self._program_object.command))
 
+        #if state_name == "STOPPED":
+            #event = "EVENT_STOPPED"
+        #elif state_name == "STARTING":
+            ## this is a restart or the first start.ignore
+            #pass
+        #elif state_name == "RUNNING":
+            #event = "EVENT_RUNNING"
+        #elif state_name == "STOPPING":
+            # ignore this one and wait for stop event
+            #pass
+        #elif state_name == "EXITED":
+            #self._exit_code = exit_status
+            #event = "EVENT_EXITED"
+        #elif state_name == "FATAL":
+            #self._exit_code = 200
+            #self._exception = "Fatal from supd"
+            #event = "EVENT_EXITED"
+        #elif state_name == "UNKNOWN":
+            #event = "EVENT_FAULT"
+        #elif state_name == "BACKOFF":
+            #event = "EVENT_EXITED"
+            #self._exit_code = 100
+
         if event:
             self._send_event(event)
 
     def poll(self):
-        pass
+        self._supd.poll()
 
     def cleanup(self):
         self._pyon.remove_process(self._program_object.process_name)
-        self._pyon._container.proc_manager.remove_proc_state_changed_callback(self._pyon_process_state_change_callback)
 
