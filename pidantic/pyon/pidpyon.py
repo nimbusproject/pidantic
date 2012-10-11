@@ -254,7 +254,8 @@ class PIDanticPyon(PIDanticStateMachineBase):
             self._callback_state = 'EVENT_EXITED'
             self._exit_code = 0
         else:
-            self._log.log(logging.WARNING, "%s has an unknown state %s. Process isn't running?" % (self._pyon_id, ProcessStateEnum._str_map[state]))
+            # We just gathered a PENDING state that isn't helpful 
+            pass
 
     def _process_state_change(self, pyon_proc):
 
