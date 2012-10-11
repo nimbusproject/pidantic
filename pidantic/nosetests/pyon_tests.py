@@ -91,7 +91,7 @@ class TestPyon(object):
         process = self.pyon.create_process_db(directory=directory,
                 module=module, module_uri=module_uri, cls=cls,
                 config=config_yaml, pyon_name=name)
-        pyon_id = self.pyon.run_process(process)
+        pyon_id = self.pyon.run_process(process, async=False)
 
         pyon_proc = self.pyon_container.proc_manager[pyon_id]
 
@@ -101,8 +101,3 @@ class TestPyon(object):
         assert pyon_proc['module'] != module
         assert pyon_proc['module'].endswith(module.replace(".", "_"))
         assert pyon_proc['config'] == config
-
-        self.pyon.terminate_process(name)
-        self.pyon.remove_process(name)
-
-

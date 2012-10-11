@@ -116,6 +116,7 @@ class Pyon(object):
                     config=config)
             if pyon_id_callback is not None:
                 pyon_id_callback(pyon_id)
+            return pyon_id
         except:
             if pyon_id_callback is not None:
                 pyon_id_callback(FAILED_PROCESS)
