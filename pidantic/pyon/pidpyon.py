@@ -10,6 +10,8 @@ from pidantic.pyon.persistence import PyonDB
 try:
     from interface.objects import ProcessStateEnum
 except ImportError:
+    # This will never be used outside of an ion env, but 
+    # it's possible this file could be imported elsewhere
     ProcessStateEnum = object()
 
 class PyonPidanticFactory(PidanticFactory):
