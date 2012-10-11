@@ -1,6 +1,6 @@
 import logging
 
-from pidantic.pyon.pyon import Pyon, SPAWN_REQUEST
+from pidantic.pyon.pyon import Pyon, FAILED_PROCESS
 
 from pidantic.ui import PidanticFactory
 from pidantic.pidbase import PIDanticStateMachineBase
@@ -114,11 +114,8 @@ class PyonPidanticFactory(PidanticFactory):
         all_procs = self._pyon.get_all_procs()
         for name, pidpyon in self._watched_processes.iteritems():
 
-            if pidpyon._program_object.pyon_process_id == SPAWN_REQUEST:
-                pidpyon._process_state_change(SPAWN_REQUEST)
-            else:
-                pyon_process = all_procs.get(pidpyon._program_object.pyon_process_id)
-                pidpyon._process_state_change(pyon_process)
+            pyon_process = all_procs.get(pidpyon._program_object.pyon_process_id)
+            pidpyon._process_state_change(pyon_process)
 
     def terminate(self):
         self._pyon.terminate()
@@ -129,6 +126,8 @@ class PIDanticPyon(PIDanticStateMachineBase):
     def __init__(self, program_object, pyon, log=logging, use_channel=False,
             channel_is_stdio=False):
         self._program_object = program_object
+        self._pyon_id = None
+        self._callback_state = None
         self._pyon = pyon
         self._exit_code = None
         self._exception = None
@@ -136,10 +135,10 @@ class PIDanticPyon(PIDanticStateMachineBase):
         PIDanticStateMachineBase.__init__(self, log=log,
                 use_channel=use_channel, channel_is_stdio=channel_is_stdio)
 
-        # TODO: PDA: am I adding a ton of callbacks here?
         self._pyon._container.proc_manager.add_proc_state_changed_callback(self._pyon_process_state_change_callback)
-        print "PDA: %s" % self._pyon._container.proc_manager._proc_state_change_callbacks
 
+    def set_pyon_id(self, pyon_id):
+        self._pyon_id = pyon_id
 
     def get_error_message(self):
         return str(self._exception)
@@ -159,7 +158,7 @@ class PIDanticPyon(PIDanticStateMachineBase):
 
     def sm_starting(self):
         self._log.info("%s Starting" % (self._program_object.process_name))
-        self._pyon.run_process(self._program_object)
+        self._pyon.run_process(self._program_object, pyon_id_callback=self.set_pyon_id)
 
     def sm_request_canceled(self):
         self._log.info("%s request canceled" % (
@@ -234,39 +233,49 @@ class PIDanticPyon(PIDanticStateMachineBase):
         pass
 
     def _pyon_process_state_change_callback(self, process, state, container):
+        """This callback is used by pyon for notifying us about state change
+        events in the process we've started. The value of the state is saved in
+        memory, and is picked up the next time the _process_state_change is called,
+        which is triggered by an eeagent heartbeat.
+        """
 
-        if self._program_object.pyon_process_id != process.id:
+        if not hasattr(process, 'id'):
+            # Process is in Pending state, which we ignore, because we don't
+            # Have a process id for it
             return
 
-        event = None
-        if state == ProcessStateEnum.ERROR:
-            event = "EVENT_EXITED"
+        if self._pyon_id != process.id:
+            return
+
+        if state == ProcessStateEnum.FAILED:
+            self._callback_state = 'EVENT_EXITED'
             self._exit_code = 100
-        elif state == ProcessStateEnum.TERMINATE:
-            event = "EVENT_EXITED"
+        elif state == ProcessStateEnum.TERMINATED:
+            self._callback_state = 'EVENT_EXITED'
+            self._exit_code = 0
+        elif state == ProcessStateEnum.EXITED:
+            self._callback_state = 'EVENT_EXITED'
             self._exit_code = 0
         else:
-            self._log.log(logging.WARNING, "%s (%s) has an unknown state. Process isn't running?" % (self._program_object.process_name, self._program_object.command))
-
-        if event:
-            self._send_event(event)
+            self._log.log(logging.WARNING, "%s has an unknown state %s. Process isn't running?" % (self._pyon_id, ProcessStateEnum._str_map[state]))
 
     def _process_state_change(self, pyon_proc):
 
         event = None
-        if not pyon_proc and self._exit_code:
-            event = "EVENT_EXITED"
-            # Keep existing non-zero exit code
-        elif not pyon_proc:
-            # Process is missing, so exited
-            event = "EVENT_EXITED"
-            self._exit_code = 0
-        elif pyon_proc and pyon_proc == SPAWN_REQUEST:
-            event = "EVENT_START_REQUEST"
-        elif pyon_proc and pyon_proc.running:
+        if self._pyon_id == FAILED_PROCESS:
+            event = 'EVENT_EXITED'
+            self._exit_code = 100
+        elif not pyon_proc and self._exit_code:
+            event = 'EVENT_EXITED'
+        elif self._pyon_id and not self._program_object.pyon_process_id:
+            self._program_object.pyon_process_id = self._pyon_id
+            self._pyon._pyon_db.db_commit()
             event = "EVENT_RUNNING"
+        elif self._callback_state is not None:
+            event = self._callback_state
+            self._callback_state = None
         else:
-            self._log.log(logging.WARNING, "%s (%s) has an unknown state. Process isn't running?" % (self._program_object.process_name, self._program_object.command))
+            self._log.log(logging.WARNING, "%s has an unknown state. %s?" % (self._program_object.process_name, pyon_proc))
 
         if event:
             self._send_event(event)

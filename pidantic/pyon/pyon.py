@@ -12,7 +12,7 @@ from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 
-SPAWN_REQUEST = "spawn_request"
+FAILED_PROCESS = "failed process"
 
 
 def proc_manager_lock(func):
@@ -92,7 +92,7 @@ class Pyon(object):
         return process_object
 
     @proc_manager_lock
-    def run_process(self, process_object, async=True):
+    def run_process(self, process_object, pyon_id_callback=None, async=True):
 
         if process_object.module_uri is not None:
             module_file = self.download_module(process_object.module_uri)
@@ -101,14 +101,11 @@ class Pyon(object):
             self._pyon_db.db_commit()
 
         if async:
-            spawn(self._run_process, process_object)
-            process_object.pyon_process_id = SPAWN_REQUEST
-            self._pyon_db.db_commit()
-            return SPAWN_REQUEST
+            spawn(self._run_process, process_object, pyon_id_callback=pyon_id_callback)
         else:
             return self._run_process(process_object)
 
-    def _run_process(self, process_object):
+    def _run_process(self, process_object, pyon_id_callback=None):
         try:
             config = yaml.load(process_object.config)
         except AttributeError:
@@ -118,10 +115,11 @@ class Pyon(object):
             pyon_id = self._container.spawn_process(name=process_object.pyon_name,
                     module=process_object.module, cls=process_object.cls,
                     config=config)
-            process_object.pyon_process_id = pyon_id
-            self._pyon_db.db_commit()
-            return pyon_id
+            if pyon_id_callback is not None:
+                pyon_id_callback(pyon_id)
         except:
+            if pyon_id_callback is not None:
+                pyon_id_callback(FAILED_PROCESS)
             self._log.exception("Problem starting pyon process %s" % process_object.pyon_name)
             return None
 
