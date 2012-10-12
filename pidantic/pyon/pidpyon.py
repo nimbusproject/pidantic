@@ -273,7 +273,8 @@ class PIDanticPyon(PIDanticStateMachineBase):
             event = self._callback_state
             self._callback_state = None
         else:
-            self._log.log(logging.WARNING, "%s has an unknown state. %s?" % (self._program_object.process_name, pyon_proc))
+            # unknown state. ignored
+            pass
 
         if event:
             self._send_event(event)
