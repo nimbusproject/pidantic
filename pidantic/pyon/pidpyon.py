@@ -2,6 +2,7 @@ import logging
 
 from pidantic.pyon.pyon import Pyon, FAILED_PROCESS
 
+from pidantic.state_machine import PIDanticState, PIDanticEvents
 from pidantic.ui import PidanticFactory
 from pidantic.pidbase import PIDanticStateMachineBase
 from pidantic.pidantic_exceptions import PIDanticUsageException  # , PIDanticExecutionException
@@ -127,6 +128,7 @@ class PIDanticPyon(PIDanticStateMachineBase):
         self._callback_state = None
         self._pyon = pyon
         self._exit_code = None
+        self._start_canceled = False
         self._exception = None
         self._run_once = False
         PIDanticStateMachineBase.__init__(self, log=log,
@@ -154,7 +156,7 @@ class PIDanticPyon(PIDanticStateMachineBase):
         self._pyon._pyon_db.db_commit()
 
     def sm_starting(self):
-        self._log.info("%s Starting" % (self._program_object.process_name))
+        self._log.info("%s starting" % (self._program_object.process_name))
         self._pyon.run_process(self._program_object, pyon_id_callback=self.set_pyon_id)
 
     def sm_request_canceled(self):
@@ -162,17 +164,18 @@ class PIDanticPyon(PIDanticStateMachineBase):
             self._program_object.pyon_name))
 
     def sm_started(self):
-        self._log.info("%s Successfully started" % (
+        self._log.info("%s successfully started" % (
             self._program_object.pyon_name))
 
     def sm_start_canceled(self):
-        self._pyon.terminate_process(self._program_object.process_name)
+        self._log.info("%s start cancelled" % (self._program_object.process_name))
+        self._start_canceled = True
 
     def sm_start_fault(self):
-        self._log.info("%s Start fault" % (self._program_object.process_name))
+        self._log.info("%s start fault" % (self._program_object.process_name))
 
     def sm_exited(self):
-        self._log.log(logging.INFO, "%s Exited" % (self._program_object.process_name))
+        self._log.info("%s exited" % (self._program_object.process_name))
 
     def sm_stopping(self):
         self._pyon.terminate_process(self._program_object.process_name)
@@ -184,17 +187,17 @@ class PIDanticPyon(PIDanticStateMachineBase):
         self._log.info("%s run fault" % (self._program_object.process_name))
 
     def sm_stopped(self):
-        self._log.info("%s Stopped" % (self._program_object.process_name))
+        self._log.info("%s stopped" % (self._program_object.process_name))
 
     def sm_restarting(self):
-        self._log.log(logging.INFO, "%s Restarting" % (self._program_object.process_name))
-        self._pyon.terminate_program(self._program_object.process_name)
+        self._log.info("%s restarting" % (self._program_object.process_name))
+        self._pyon.terminate_process(self._program_object.process_name)
 
     def sm_stopping_fault(self):
-        self._log.log(logging.INFO, "%s Stopping fault" % (self._program_object.process_name))
+        self._log.info("%s stopping fault" % (self._program_object.process_name))
 
     def sm_restart_fault(self):
-        self._log.log(logging.INFO, "%s Re-Starting fault" % (self._program_object.process_name))
+        self._log.info("%s re-starting fault" % (self._program_object.process_name))
 
     def get_result_code(self):
         return self._exit_code
@@ -245,13 +248,13 @@ class PIDanticPyon(PIDanticStateMachineBase):
             return
 
         if state == ProcessStateEnum.FAILED:
-            self._callback_state = 'EVENT_EXITED'
+            self._callback_state = PIDanticEvents.EVENT_EXITED
             self._exit_code = 100
         elif state == ProcessStateEnum.TERMINATED:
-            self._callback_state = 'EVENT_EXITED'
+            self._callback_state = PIDanticEvents.EVENT_EXITED
             self._exit_code = 0
         elif state == ProcessStateEnum.EXITED:
-            self._callback_state = 'EVENT_EXITED'
+            self._callback_state = PIDanticEvents.EVENT_EXITED
             self._exit_code = 0
         else:
             # We just gathered a PENDING state that isn't helpful 
@@ -261,20 +264,24 @@ class PIDanticPyon(PIDanticStateMachineBase):
 
         event = None
         if self._pyon_id == FAILED_PROCESS:
-            event = 'EVENT_EXITED'
+            event = PIDanticEvents.EVENT_EXITED
             self._exit_code = 100
         elif not pyon_proc and self._exit_code:
-            event = 'EVENT_EXITED'
+            event = PIDanticEvents.EVENT_EXITED
         elif self._pyon_id and not self._program_object.pyon_process_id:
             self._program_object.pyon_process_id = self._pyon_id
             self._pyon._pyon_db.db_commit()
-            event = "EVENT_RUNNING"
+            event = PIDanticEvents.EVENT_RUNNING
         elif self._callback_state is not None:
             event = self._callback_state
             self._callback_state = None
         else:
             # unknown state. ignored
             pass
+
+        if event == PIDanticEvents.EVENT_RUNNING and self._start_canceled:
+            self._start_canceled = None
+            event = PIDanticEvents.EVENT_STOPPED
 
         if event:
             self._send_event(event)

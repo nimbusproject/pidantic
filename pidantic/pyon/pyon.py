@@ -158,7 +158,11 @@ class Pyon(object):
     @proc_manager_lock
     def terminate_process(self, name):
         pyon_id = self._get_pyon_process_id(name)
-        terminate_result = self._container.terminate_process(pyon_id)
+        try:
+            terminate_result = self._container.terminate_process(pyon_id)
+        except Exception:
+            self._log.exception("Could not terminate process %s with id %s" % (name, pyon_id))
+            terminate_result = None
 
         return terminate_result
 
