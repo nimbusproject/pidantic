@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from pidantic.pyon.pyon import Pyon, FAILED_PROCESS
 
@@ -118,14 +119,23 @@ class PyonPidanticFactory(PidanticFactory):
     def terminate(self):
         self._pyon.terminate()
 
+def state_change_lock(func):
+    def call(self, *args, **kwargs):
+
+        with self._state_change_lock:
+            return func(self, *args, **kwargs)
+    return call
 
 class PIDanticPyon(PIDanticStateMachineBase):
+
+
 
     def __init__(self, program_object, pyon, log=logging, use_channel=False,
             channel_is_stdio=False):
         self._program_object = program_object
         self._pyon_id = None
         self._callback_state = None
+        self._state_change_lock = threading.RLock()
         self._pyon = pyon
         self._exit_code = None
         self._start_canceled = False
@@ -262,6 +272,9 @@ class PIDanticPyon(PIDanticStateMachineBase):
             # We just gathered a PENDING state that isn't helpful 
             pass
 
+        self._process_state_change(None)
+
+    @state_change_lock
     def _process_state_change(self, pyon_proc):
 
         event = None
