@@ -239,6 +239,8 @@ class PIDanticPyon(PIDanticStateMachineBase):
         which is triggered by an eeagent heartbeat.
         """
 
+        self._log.info("Got callback (%s, %s, %s) from container" % (process, state, container))
+
         if not hasattr(process, 'id'):
             # Process is in Pending state, which we ignore, because we don't
             # Have a process id for it
