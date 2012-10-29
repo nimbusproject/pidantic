@@ -12,6 +12,11 @@ from eeagent.util import unmake_id
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
 
+from interface.objects import ProcessStateEnum
+
+class FakeIonService(object):
+    id = None
+
 FAILED_PROCESS = "failed process"
 
 def proc_manager_lock(func):
@@ -24,7 +29,7 @@ def proc_manager_lock(func):
 
 class Pyon(object):
 
-    cols = ['directory', 'pyon_name', 'module', 'module_uri', 'cls', 'process_name', 'config', ]
+    cols = ['directory', 'pyon_name', 'module', 'module_uri', 'cls', 'process_name', 'config', 'pyon_process_id']
 
     def __init__(self, pyon_db, pyon_container=None, proc=None, name=None,
             data_object=None, dirpath=None, log=logging):
@@ -91,7 +96,7 @@ class Pyon(object):
         return process_object
 
     @proc_manager_lock
-    def run_process(self, process_object, pyon_id_callback=None, async=True):
+    def run_process(self, process_object, async=True, state_change_callback=None):
 
         if process_object.module_uri is not None:
             module_file = self.download_module(process_object.module_uri)
@@ -100,11 +105,11 @@ class Pyon(object):
             self._pyon_db.db_commit()
 
         if async:
-            spawn(self._run_process, process_object, pyon_id_callback=pyon_id_callback)
+            spawn(self._run_process, process_object, state_change_callback=state_change_callback)
         else:
             return self._run_process(process_object)
 
-    def _run_process(self, process_object, pyon_id_callback=None):
+    def _run_process(self, process_object, state_change_callback=None):
         try:
             config = yaml.load(process_object.config)
         except AttributeError:
@@ -113,15 +118,14 @@ class Pyon(object):
         try:
             pyon_id = self._container.spawn_process(name=process_object.pyon_name,
                     module=process_object.module, cls=process_object.cls,
-                    config=config)
-            if pyon_id_callback is not None:
-                pyon_id_callback(pyon_id)
-            return pyon_id
+                    config=config, process_id=str(process_object.pyon_process_id))
         except:
-            if pyon_id_callback is not None:
-                pyon_id_callback(FAILED_PROCESS)
             self._log.exception("Problem starting pyon process %s" % process_object.pyon_name)
-            return None
+            if state_change_callback is not None:
+                proc = FakeIonService()
+                proc.id = process_object.pyon_process_id
+                state_change_callback(proc, ProcessStateEnum.FAILED, None)
+
 
     def download_module(self, module_uri):
         try:
@@ -148,9 +152,12 @@ class Pyon(object):
         unique = uuid4().hex
         if module:
             unique = ".".join([unique, module])
-            unique = unique.replace(".", "_")
+            unique = self._sanitize_module_name(unique)
 
         return unique
+
+    def _sanitize_module_name(self, module):
+        return module.replace(".", "_")
 
     def getState(self):
         return self._container._is_started
