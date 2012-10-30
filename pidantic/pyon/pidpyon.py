@@ -2,7 +2,7 @@ import string
 import logging
 import threading
 
-from pidantic.pyon.pyon import Pyon, FAILED_PROCESS
+from pidantic.pyon.pyon import Pyon
 
 from pidantic.state_machine import PIDanticState, PIDanticEvents
 from pidantic.ui import PidanticFactory

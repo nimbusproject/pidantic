@@ -1,6 +1,7 @@
 import os
 from uuid import uuid4
 from tempfile import mkstemp
+from importlib import import_module
 
 import pidantic.pyon.pyon as pyon
 from pidantic.pyon.persistence import PyonDB, PyonDataObject, PyonProcDataObject
@@ -68,12 +69,29 @@ class TestPyon(object):
         testdir = os.path.dirname(__file__)
         testfile = os.path.join(testdir, "module_to_download.py")
 
-        module_name = self.pyon.load_module(testfile, "modname")
+        module_name = self.pyon.load_module("modname", testfile)
 
-        mod = __import__(module_name)
+        mod = import_module(module_name)
 
         tp = mod.TestProcess()
         assert tp.gettrue()
+
+        # Test module that should already exist
+        module_name = self.pyon.load_module("os.path", testfile)
+        print module_name
+        mod = import_module(module_name)
+        print dir(mod)
+        assert hasattr(mod, 'join')
+
+        # Test module that doesn't exist, no file
+        raised = False
+        try:
+            module_name = self.pyon.load_module("somefakemodule")
+        except ImportError:
+            raised = True
+        assert raised, "ImportError wasn't raised on nonexistant module"
+
+
 
     def test_run(self):
         testdir = os.path.dirname(__file__)
@@ -87,13 +105,15 @@ class TestPyon(object):
         config_yaml = '{"some": "config"}'
         config = {"some": "config"}
         name = "myprocname"
+        pyon_process_id = "mypyonproc"
 
         process = self.pyon.create_process_db(directory=directory,
                 module=module, module_uri=module_uri, cls=cls,
-                config=config_yaml, pyon_name=name)
-        pyon_id = self.pyon.run_process(process, async=False)
+                config=config_yaml, pyon_name=name, pyon_process_id=pyon_process_id)
+        self.pyon.run_process(process, async=False)
 
-        pyon_proc = self.pyon_container.proc_manager[pyon_id]
+        print self.pyon_container.proc_manager.keys()
+        pyon_proc = self.pyon_container.proc_manager[pyon_process_id]
 
         assert self.pyon.getState()
 

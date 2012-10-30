@@ -7,17 +7,22 @@ from imp import load_source
 from urllib import urlretrieve
 from uuid import uuid4
 from gevent import spawn
+from importlib import import_module
 
-from eeagent.util import unmake_id
+
 from pidantic.pyon.persistence import PyonDataObject, PyonProcDataObject
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticExecutionException
+try:
+    from interface.objects import ProcessStateEnum
+except ImportError:
+    ProcessStateEnum = object()
 
-from interface.objects import ProcessStateEnum
+CACHE_DOWNLOADS = True
+
 
 class FakeIonService(object):
     id = None
 
-FAILED_PROCESS = "failed process"
 
 def proc_manager_lock(func):
     def call(self, *args, **kwargs):
@@ -99,8 +104,9 @@ class Pyon(object):
     def run_process(self, process_object, async=True, state_change_callback=None):
 
         if process_object.module_uri is not None:
-            module_file = self.download_module(process_object.module_uri)
-            module = self.load_module(module_file, process_object.module)
+            module = self.load_module(process_object.module,
+                    module_uri=process_object.module_uri)
+
             process_object.module = module
             self._pyon_db.db_commit()
 
@@ -130,20 +136,43 @@ class Pyon(object):
     def download_module(self, module_uri):
         try:
             module_file, _ = urlretrieve(module_uri)
-        except:
+        except Exception:
             msg = "Unable to download code module %s" % module_uri
             self._log.exception(msg)
             raise PIDanticExecutionException(msg)
         return module_file
 
-    def load_module(self, module_file, module):
-        module_name = self._unique_module_name(module)
+    def load_module(self, module, module_uri=None):
+        """load_module
+
+        Attempts to load module by name, if it is not available,
+        loads it by url
+        """
+        # Check to see that module isn't availble in python path
         try:
-            load_source(module_name, module_file)
-        except:
-            msg = "Unable to load code module %s" % module
-            self._log.exception(msg)
-            raise PIDanticExecutionException(msg)
+            import_module(module)
+        except ImportError, e:
+            if module_uri is None:
+                raise e
+        else:
+            return module
+
+        if not CACHE_DOWNLOADS:
+            module_name = self._unique_module_name(module)
+        else:
+            module_name = self._sanitize_module_name(module)
+
+        # Check to see whether we've already downloaded, otherwise, download
+        try:
+            import_module(module_name)
+        except ImportError:
+            module_file = self.download_module(module_uri)
+            try:
+                load_source(module_name, module_file)
+            except Exception:
+                msg = "Unable to load code module %s" % module
+                self._log.exception(msg)
+                raise PIDanticExecutionException(msg)
 
         return module_name
 
