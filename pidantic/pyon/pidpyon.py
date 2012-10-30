@@ -129,6 +129,7 @@ class PyonPidanticFactory(PidanticFactory):
             self._log.warning("Got callback for unknown process %s" % process.id)
             return
 
+        self._log.debug("Got callback for process %s with state %s" % (process.id, ProcessStateEnum._str_map[state]_))
         pidpyon._process_state_change(state)
 
     def poll(self):
