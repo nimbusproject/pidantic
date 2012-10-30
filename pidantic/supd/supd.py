@@ -71,6 +71,7 @@ class SupD(object):
         password = "XXX"
 
         transport = supervisor.xmlrpc.SupervisorTransport(username, password, url)
+        self.transport = transport
         # using special supervisor.xmlrpc transport so URL here
         # doesn't matter.
         self._proxy = xmlrpclib.ServerProxy('http://127.0.0.1', transport=transport)
@@ -169,6 +170,13 @@ class SupD(object):
     def terminate(self):
         sup = self._proxy.supervisor
         rc = sup.shutdown()
+
+        # supd doesn't seem to expose a clean way to close the unix socket.
+        # peeking in and closing it directly on the connection.
+        if self.transport.connection:
+            self.transport.connection.close()
+            self.transport.connection = None
+
         return rc
 
     def ping(self):
