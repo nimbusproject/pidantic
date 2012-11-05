@@ -18,12 +18,6 @@ except ImportError, e:
     ProcessStateEnum = object()
 
 
-# _abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
-BASIC_VALID = "_%s%s" % (string.ascii_letters, string.digits)
-def create_valid_identifier(name, valid_chars=BASIC_VALID):
-    return "id" + ''.join(c for c in name if c in valid_chars)
-
-
 class PyonPidanticFactory(PidanticFactory):
 
     driver_name = "pyon"
@@ -94,7 +88,7 @@ class PyonPidanticFactory(PidanticFactory):
             if p not in self.run_needed_keywords and p not in self.run_optional_keywords:
                 raise PIDanticUsageException("The driver %s does not know the parameter %s." % (self.driver_name, p))
 
-        kwargs['pyon_process_id'] = create_valid_identifier(kwargs['process_name'])
+        kwargs['pyon_process_id'], _round = kwargs['process_name'].split('-')
         program_object = self._pyon.create_process_db(**kwargs)
 
         pidpyon = PIDanticPyon(program_object, self._pyon, log=self._log, state_change_callback=self._pyon_process_state_change_callback)
