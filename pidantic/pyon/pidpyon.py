@@ -108,6 +108,7 @@ class PyonPidanticFactory(PidanticFactory):
 
     def _mark_all_failed(self):
         for pyon_process_id, pidpyon in self._watched_processes.iteritems():
+            self._log.error("Marking %s failed after a restart" % pyon_process_id)
             pidpyon._exit_code = 100
             pidpyon._process_state_change(ProcessStateEnum.FAILED)
 
