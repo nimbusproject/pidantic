@@ -4,7 +4,7 @@ import threading
 
 from pidantic.pyon.pyon import Pyon
 
-from pidantic.state_machine import PIDanticState, PIDanticEvents
+from pidantic.state_machine import PIDanticEvents
 from pidantic.ui import PidanticFactory
 from pidantic.pidbase import PIDanticStateMachineBase
 from pidantic.pidantic_exceptions import PIDanticUsageException  # , PIDanticExecutionException
@@ -129,8 +129,7 @@ class PyonPidanticFactory(PidanticFactory):
     def poll(self):
         """For Pyon, this function is handled by callbacks from the container
         """
-        for pyon_process_id, pidpyon in self._watched_processes.iteritems():
-            pidpyon._process_state_change(None)
+        pass
 
     def terminate(self):
         self.container.proc_manager.remove_proc_state_changed_callback(self._pyon_process_state_change_callback)
@@ -270,7 +269,6 @@ class PIDanticPyon(PIDanticStateMachineBase):
             event = PIDanticEvents.EVENT_EXITED
             self._exit_code = 100
         else:
-            self._log.debug("Ignoring state %s" % state)
             return
 
 
