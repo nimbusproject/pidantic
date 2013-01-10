@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup
 
 import sys
-Version = "0.1"
+Version = "0.1.0"
 
 if float("%d.%d" % sys.version_info[:2]) < 2.5:
     sys.stderr.write("Your Python version %d.%d.%d is not supported.\n" % sys.version_info[:3])
