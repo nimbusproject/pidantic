@@ -7,11 +7,11 @@ except ImportError:
     from distutils.core import setup
 
 import sys
-Version = "0.1.0"
+Version = "0.1.1"
 
 if float("%d.%d" % sys.version_info[:2]) < 2.5:
     sys.stderr.write("Your Python version %d.%d.%d is not supported.\n" % sys.version_info[:3])
-    sys.stderr.write("cloudinitd requires Python 2.5 or newer.\n")
+    sys.stderr.write("pidantic requires Python 2.5 or newer.\n")
     sys.exit(1)
 
 setup(name='pidantic',
@@ -20,7 +20,6 @@ setup(name='pidantic',
       author='Nimbus Development Team',
       author_email='workspace-user@globus.org',
       url='http://www.nimbusproject.org/',
-      dependency_links=['http://ooici.net/releases'],
       packages=['pidantic', 'pidantic.fork', 'pidantic.supd', 'pidantic.pyon'],
       keywords="OOI PID process fork supervisord ION",
       long_description="""Some other time""",
