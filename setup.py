@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup
 
 import sys
-Version = "0.1.1"
+VERSION = "0.1.1"
 
 if float("%d.%d" % sys.version_info[:2]) < 2.5:
     sys.stderr.write("Your Python version %d.%d.%d is not supported.\n" % sys.version_info[:3])
@@ -15,17 +15,17 @@ if float("%d.%d" % sys.version_info[:2]) < 2.5:
     sys.exit(1)
 
 setup(name='pidantic',
-      version=Version,
+      version=VERSION,
       description='An abstraction to process management for OOI',
       author='Nimbus Development Team',
       author_email='workspace-user@globus.org',
-      url='http://www.nimbusproject.org/',
+      url='https://github.com/nimbusproject/pidantic',
+      download_url="http://www.nimbusproject.org/downloads/pidantic-%s.tar.gz" % VERSION,
       packages=['pidantic', 'pidantic.fork', 'pidantic.supd', 'pidantic.pyon'],
       keywords="OOI PID process fork supervisord ION",
       long_description="""Some other time""",
       license="Apache2",
       install_requires=['supervisor', 'sqlalchemy==0.7.6', 'gevent'],
-
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',
