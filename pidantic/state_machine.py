@@ -54,6 +54,9 @@ class PIDanticStateMachine(object):
 
         self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
         self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_START_REQUEST, PIDanticState.STATE_STARTING, o.sm_starting)
+        self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_start_canceled)
+        self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STARTING, o.sm_start_fault)
+        self.set_mapping(PIDanticState.STATE_PENDING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
 
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_CANCEL_REQUEST, PIDanticState.STATE_REQUEST_CANCELED, o.sm_request_canceled)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RUNNING, PIDanticState.STATE_RUNNING, o.sm_started)
