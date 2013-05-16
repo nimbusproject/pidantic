@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException, PIDanticStateException
 
@@ -63,7 +65,7 @@ class PIDanticStateMachine(object):
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_start_canceled)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STARTING, o.sm_start_fault)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_EXITED, o.sm_stopped)
-        # the next mapping just meanst that the process has not yet been started
+        # the next mapping just means that the process has not yet been started
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_STOPPED, PIDanticState.STATE_STARTING, None)
         self.set_mapping(PIDanticState.STATE_STARTING, PIDanticEvents.EVENT_RESTART_REQUEST, PIDanticState.STATE_STOPPING_RESTART, o.sm_restarting)
 

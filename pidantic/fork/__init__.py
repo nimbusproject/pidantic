@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 import logging
 from pidantic.fork.pidfork import PIDanticFork
 from pidantic.pidbase import _set_param_or_default

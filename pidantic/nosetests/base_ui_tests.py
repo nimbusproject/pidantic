@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 from pidantic.pidantic_exceptions import PIDanticUsageException
 from pidantic.ui import PIDantic, PidanticFactory
 import unittest

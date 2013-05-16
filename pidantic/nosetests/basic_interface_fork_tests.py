@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 #import gevent
 #from pidantic.fork import ForkPidanticFactory
 #from pidantic.pidantic_exceptions import PIDanticStateException

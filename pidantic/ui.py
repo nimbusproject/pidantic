@@ -1,10 +1,11 @@
-import inspect
+# Copyright 2013 University of Chicago
+
 import logging
 from pidantic.pidantic_exceptions import PIDanticUsageException
 
 
 def not_implemented(func):
-    def call(self, *args,**kwargs):
+    def call(self, *args, **kwargs):
         def raise_error(func):
             raise PIDanticUsageException("function %s must be implemented" % (func.func_name))
         return raise_error(func)
@@ -13,7 +14,13 @@ def not_implemented(func):
 
 class PidanticFactory(object):
 
+    available = False
+
     def __init__(self, **kwvals):
+        # allow the factory to declare itself unavailable to avoid sending
+        # heartbeats during weird transition states, for example when clearing all
+        # processes
+        self.available = True
         pass
 
     def get_pidantic(self, **kwvals):

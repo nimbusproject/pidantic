@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 from pidantic.state_machine import PIDanticStateMachine
 import inspect
 import logging

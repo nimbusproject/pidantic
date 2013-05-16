@@ -58,3 +58,5 @@ An example of how to start an interact with a process:
     
     # Shut down the factory
     factory.terminate()
+
+Copyright 2013 University of Chicago

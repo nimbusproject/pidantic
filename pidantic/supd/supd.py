@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 from pidantic.state_machine import PIDanticState
 import supervisor.xmlrpc
 import xmlrpclib

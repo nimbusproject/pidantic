@@ -1,3 +1,5 @@
+# Copyright 2013 University of Chicago
+
 import tempfile
 from pidantic.pidantic_exceptions import PIDanticStateException
 from pidantic.supd.pidsupd import SupDPidanticFactory
