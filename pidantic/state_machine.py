@@ -80,7 +80,7 @@ class PIDanticStateMachine(object):
         self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_STARTING, o.sm_starting)
         self.set_mapping(PIDanticState.STATE_STOPPING_RESTART, PIDanticEvents.EVENT_FAULT, PIDanticState.STATE_STOPPING_RESTART, o.sm_restart_fault)
 
-        self.set_mapping(PIDanticState.STATE_REQUEST_CANCELED, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
+        self.set_mapping(PIDanticState.STATE_REQUEST_CANCELED, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_REQUEST_CANCELED, None)
 
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_STOP_REQUEST, PIDanticState.STATE_STOPPING, o.sm_kill)
         self.set_mapping(PIDanticState.STATE_STOPPING, PIDanticEvents.EVENT_EXITED, PIDanticState.STATE_TERMINATED, o.sm_stopped)
